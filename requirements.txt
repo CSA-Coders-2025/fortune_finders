@@ -1,0 +1,10 @@
+nbconvert
+nbformat
+pyyaml
+notebook
+requests
+python-dotenv
+pandas
+seaborn
+scikit-learn
+progress

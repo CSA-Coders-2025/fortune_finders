@@ -1,0 +1,20 @@
+@import "platformer-game";
+@import "chatbot";
+@import "hacks";
+@import "navbar";
+@import "bathroom";
+@import "hallpass";
+@import "search";
+
+// aesthetihawk stuff
+@import "materials/main.scss";
+@import "elements/main.scss";
+
+
+html,
+body,
+input,
+textarea,
+select {
+    background-color: $background;
+}

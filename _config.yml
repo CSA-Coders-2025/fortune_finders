@@ -1,0 +1,24 @@
+title: Open Coding 
+description: "Class of 2025"
+owner_name: John Mortensen
+github_username: jm1021 
+github_repo: "pages" 
+baseurl: "/pages"
+future: true
+remote_theme: jekyll/minima
+minima:
+  skin: dark
+  social_links:
+    - { platform: github, user_url: "https://github.com/open-coding-society" }
+    - { platform: x, user_url: "https://x.com/Open_Coding" }
+    - { platform: youtube, user_url: "https://www.youtube.com/@OpenCodingSociety" } 
+plugins:
+  - jekyll-remote-theme
+  - jekyll-include-cache
+header_pages:
+  - navigation/section/csse.md
+  - navigation/section/csp.md
+  - navigation/section/csa.md 
+  - navigation/blog.md
+  - navigation/search.md
+  - navigation/logintoolkit.md
