@@ -620,7 +620,7 @@ class Quiz {
             // Award NPC cookie for correct answer
             try {
                 if (Game && Game.giveNpcCookie) {
-                    Game.giveNpcCookie(npcCategory, "quiz_completed");
+                    Game.giveNpcCookie(npcCategory, "completed", "Great job answering the quiz questions! You've demonstrated your knowledge.");
                     console.log(`NPC Cookie awarded for ${npcCategory}`);
                 }
             } catch (error) {
