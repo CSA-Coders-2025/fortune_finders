@@ -514,6 +514,85 @@ class GameLevelAirport {
       }
     };
 
+const sprite_src_mining = path + "/images/gamify/miningRigMan.png";
+    const sprite_data_mining = {
+      id: 'Mining-NPC',
+      greeting: "Greetings, seeker. I am Jery , geologist of decentralized currency.",
+      src: sprite_src_mining,
+      SCALE_FACTOR: 6,
+      ANIMATION_RATE: 50,
+      pixels: { height: 282, width: 282 },
+      INIT_POSITION: { x: width * 0.69, y: height * 0.24 },
+      orientation: { rows: 1, columns: 1 },
+      down: { row: 0, start: 0, columns: 1 },
+      hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
+      reaction: function () {
+        // Define dialog functions
+        const dialogFunctions = {
+          intro: function() {
+          showDialogBox(
+            "Satoshi Nakamoto",
+            "Greetings, seeker. I am Satoshi Nakamoto, architect of decentralized currency.\nAre you curious about Bitcoin or ready to explore the Crypto Hub?",
+            [
+                { label: "Tell me about Bitcoin", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true },
+              { label: "Go to Crypto Hub", action: () => openInModal(`${pagesURI}/crypto/portfolio`) },
+              { label: "Goodbye", action: () => {} }
+            ]
+          );
+          },
+          aboutBitcoin: function() {
+          showDialogBox(
+            "Satoshi Nakamoto",
+            "Bitcoin is a decentralized digital currency, born from a desire for freedom and transparency. It operates without banks or governments.\nWould you like to know how to buy or mine Bitcoin?",
+            [
+                { label: "How do I buy Bitcoin?", action: () => dialogFunctions.howToBuy(), keepOpen: true },
+                { label: "How do I mine Bitcoin?", action: () => dialogFunctions.howToMine(), keepOpen: true },
+                { label: "Back", action: () => dialogFunctions.intro(), keepOpen: true }
+            ]
+          );
+          },
+          howToBuy: function() {
+          showDialogBox(
+            "Satoshi Nakamoto",
+            "To buy Bitcoin, you need a digital wallet and access to a crypto exchange. You can purchase fractions of a Bitcoin.\nWould you like to visit the Crypto Hub to start your journey?",
+            [
+              { label: "Yes, take me there", action: () => openInModal(`${pagesURI}/crypto/portfolio`) },
+              { label: "Back", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true }
+            ]
+          );
+          },
+          howToMine: function() {
+          showDialogBox(
+            "Satoshi Nakamoto",
+            "Mining Bitcoin requires powerful computers to solve complex puzzles. Miners are rewarded with Bitcoin for verifying transactions.\nWould you like to try mining or learn more?",
+            [
+              { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
+              { label: "Back", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true }
+            ]
+          );
+        }
+        };
+
+        function openInModal(url) {
+          cryptoFrame.src = url;
+          cryptoModal.style.display = "flex";
+        }
+
+        // Return the dialog functions so they can be accessed from interact
+        return dialogFunctions;
+      },
+      interact: async function () {
+        const game = gameEnv.game;
+        const npcProgressSystem = new NpcProgressSystem();
+        const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_crypto.id);
+        if (allowed) {
+          const dialogFunctions = sprite_data_crypto.reaction();
+          dialogFunctions.intro();
+        }
+      }
+    };
+
+
 
     const sprite_src_fidelity = path + "/images/gamify/fidelitygirl.png";
     const sprite_data_fidelity = {
