@@ -419,9 +419,11 @@ function showDialogBox(title, message, options = []) {
       
       // Play a quick completion sound
       try {
-        sounds.realisticTypewriter.playCompletion();
+        if (window.gameAudioEnabled !== false) {
+          sounds.realisticTypewriter.playCompletion();
+        }
       } catch (e) {
-        console.log("Skip completion sound error:", e);
+        console.log("Completion sound error:", e);
       }
       
       // Remove the event listener
@@ -514,7 +516,9 @@ function showDialogBox(title, message, options = []) {
       // Play completion sound with slight delay for realism
       setTimeout(() => {
         try {
-          sounds.realisticTypewriter.playCompletion();
+          if (window.gameAudioEnabled !== false) {
+            sounds.realisticTypewriter.playCompletion();
+          }
         } catch (e) {
           console.log("Completion sound error:", e);
         }
