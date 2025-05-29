@@ -369,9 +369,34 @@ function showDialogBox(title, message, options = []) {
   let typingComplete = false;
   let lineLength = 0; // Track characters per line for typewriter bell
   const maxLineLength = 70; // Typical typewriter line length
+  let isSkipping = false; // Track if user wants to skip typing
+  
+  // Add skip functionality
+  const skipHandler = (e) => {
+    if (!typingComplete && !isSkipping) {
+      isSkipping = true;
+      // Instantly show full message
+      messageElement.textContent = message;
+      messageElement.classList.remove('typing');
+      typingComplete = true;
+      
+      // Play a quick completion sound
+      try {
+        sounds.realisticTypewriter.playCompletion();
+      } catch (e) {
+        console.log("Skip completion sound error:", e);
+      }
+      
+      // Remove the event listener
+      document.removeEventListener('keydown', skipHandler);
+    }
+  };
+  
+  // Add event listener for skipping
+  document.addEventListener('keydown', skipHandler);
   
   const typeWriter = () => {
-    if (charIndex < message.length) {
+    if (charIndex < message.length && !isSkipping) {
       messageElement.textContent = message.substring(0, charIndex + 1);
       const char = message[charIndex];
       charIndex++;
@@ -431,10 +456,13 @@ function showDialogBox(title, message, options = []) {
       }
       
       setTimeout(typeWriter, charSpeed + variance);
-    } else if (!typingComplete) {
-      // Typing just completed
+    } else if (!typingComplete && !isSkipping) {
+      // Typing just completed naturally
       typingComplete = true;
       messageElement.classList.remove('typing');
+      
+      // Remove skip handler since typing is done
+      document.removeEventListener('keydown', skipHandler);
       
       // Play completion sound with slight delay for realism
       setTimeout(() => {
