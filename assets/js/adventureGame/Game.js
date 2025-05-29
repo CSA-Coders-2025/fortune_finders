@@ -524,26 +524,28 @@ class StatsManager {
     updateNpcsTalkedToUI(count) {
         const npcsSpan = document.getElementById('npcsTalkedTo');
         if (npcsSpan) {
-            // Get actual NPC cookies count for dynamic display
+            // Get actual NPC cookies count for waypoint NPCs only
+            const waypointNpcs = [
+                'Stock-NPC', 'Casino-NPC', 'Fidelity', 'Schwab', 
+                'Crypto-NPC', 'Bank-NPC', 'Market Computer'
+            ];
             const npcCookies = this.getAllNpcCookies();
-            const npcCookiesCount = Object.keys(npcCookies).length;
+            const npcCookiesCount = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
             npcsSpan.textContent = npcCookiesCount;
         }
         // Update progress bar
         const bar = document.getElementById('npcs-progress-bar');
         const label = document.getElementById('npcs-progress-label');
         if (bar && label) {
-            const npcCookies = this.getAllNpcCookies();
-            const npcCookiesCount = Object.keys(npcCookies).length;
-            
-            // List of available NPCs that can give cookies
-            const availableNpcs = [
-                'Stock-NPC', 'Crypto-NPC', 'Casino-NPC', 'Bank-NPC',
-                'Fidelity', 'Schwab', 'Market Computer'
+            const waypointNpcs = [
+                'Stock-NPC', 'Casino-NPC', 'Fidelity', 'Schwab', 
+                'Crypto-NPC', 'Bank-NPC', 'Market Computer'
             ];
-            const totalAvailable = availableNpcs.length;
+            const npcCookies = this.getAllNpcCookies();
+            const npcCookiesCount = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
+            const totalAvailable = waypointNpcs.length;
             
-            // Calculate percentage based on available NPCs
+            // Calculate percentage based on waypoint NPCs
             const percentage = totalAvailable > 0 ? (npcCookiesCount / totalAvailable) * 100 : 0;
             bar.style.width = `${Math.min(percentage, 100)}%`;
             label.textContent = `${npcCookiesCount} / ${totalAvailable}`;
@@ -1501,10 +1503,23 @@ class Game {
         
         if (!progressFill || !progressText) return;
 
-        // Calculate progress based on NPC cookies
-        const totalNpcs = 7; // Total available NPCs
+        // Define the main waypoint NPCs (should match WaypointArrow.js)
+        const waypointNpcs = [
+            'Stock-NPC',
+            'Casino-NPC', 
+            'Fidelity',
+            'Schwab',
+            'Crypto-NPC',
+            'Bank-NPC',
+            'Market Computer'
+        ];
+
+        // Calculate progress based on waypoint NPC cookies only
+        const totalNpcs = waypointNpcs.length; // 7 NPCs
         const npcCookies = this.getAllNpcCookies();
-        const completedNpcs = Object.keys(npcCookies).length;
+        
+        // Count only waypoint NPCs that have at least one cookie
+        const completedNpcs = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
         const progressPercentage = (completedNpcs / totalNpcs) * 100;
 
         // Update progress bar
