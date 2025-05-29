@@ -972,7 +972,7 @@ class StatsManager {
         audioToggleContainer.id = 'audio-toggle-container';
         audioToggleContainer.style.cssText = `
             position: fixed;
-            top: 20px;
+            top: 120px;
             left: 20px;
             z-index: 10000;
             display: flex;
@@ -1807,7 +1807,7 @@ class Game {
         audioToggleContainer.id = 'audio-toggle-container';
         audioToggleContainer.style.cssText = `
             position: fixed;
-            top: 20px;
+            top: 120px;
             left: 20px;
             z-index: 10000;
             display: flex;
