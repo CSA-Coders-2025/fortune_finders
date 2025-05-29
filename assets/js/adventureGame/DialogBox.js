@@ -12,70 +12,223 @@ const createAudio = (src) => {
   return audio;
 };
 
-// Enhanced typewriter sound generation
-const createEnhancedTypewriterSound = () => {
+// Enhanced realistic typewriter sound generation
+const createRealisticTypewriterSound = () => {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   
-  const playTypewriterClick = () => {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    const filterNode = audioContext.createBiquadFilter();
+  // Create realistic key click sound
+  const playKeyClick = () => {
+    // Create multiple sound layers for realistic mechanical sound
+    const now = audioContext.currentTime;
     
-    oscillator.connect(filterNode);
-    filterNode.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    // Main click sound (mechanical strike)
+    const osc1 = audioContext.createOscillator();
+    const gain1 = audioContext.createGain();
+    const filter1 = audioContext.createBiquadFilter();
     
-    // Vary the frequency slightly for more realistic typing
-    const baseFreq = 400 + Math.random() * 600; // Random between 400-1000Hz
-    oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
-    oscillator.type = 'square';
+    osc1.connect(filter1);
+    filter1.connect(gain1);
+    gain1.connect(audioContext.destination);
     
-    // Add filtering for mechanical sound
-    filterNode.type = 'lowpass';
-    filterNode.frequency.setValueAtTime(1500 + Math.random() * 1000, audioContext.currentTime);
+    // Sharp attack with metallic click
+    osc1.frequency.setValueAtTime(1200 + Math.random() * 800, now);
+    osc1.type = 'square';
+    filter1.type = 'bandpass';
+    filter1.frequency.setValueAtTime(2000 + Math.random() * 1000, now);
+    filter1.Q.setValueAtTime(2, now);
     
-    // Quick attack and decay with slight randomization
-    const volume = 0.08 + Math.random() * 0.04; // Random volume 0.08-0.12
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.005);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.04);
+    gain1.gain.setValueAtTime(0, now);
+    gain1.gain.linearRampToValueAtTime(0.15, now + 0.003);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.04);
+    osc1.start(now);
+    osc1.stop(now + 0.02);
+    
+    // Secondary mechanical thud
+    const osc2 = audioContext.createOscillator();
+    const gain2 = audioContext.createGain();
+    const filter2 = audioContext.createBiquadFilter();
+    
+    osc2.connect(filter2);
+    filter2.connect(gain2);
+    gain2.connect(audioContext.destination);
+    
+    osc2.frequency.setValueAtTime(200 + Math.random() * 150, now);
+    osc2.type = 'sawtooth';
+    filter2.type = 'lowpass';
+    filter2.frequency.setValueAtTime(800, now);
+    
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(0.08, now + 0.002);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    
+    osc2.start(now);
+    osc2.stop(now + 0.05);
+    
+    // Add subtle noise for paper/mechanism sound
+    const bufferSize = audioContext.sampleRate * 0.03; // 30ms of noise
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const output = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = (Math.random() * 2 - 1) * 0.02; // Quiet noise
+    }
+    
+    const noiseSource = audioContext.createBufferSource();
+    const noiseGain = audioContext.createGain();
+    const noiseFilter = audioContext.createBiquadFilter();
+    
+    noiseSource.buffer = buffer;
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(audioContext.destination);
+    
+    noiseFilter.type = 'highpass';
+    noiseFilter.frequency.setValueAtTime(1000, now);
+    
+    noiseGain.gain.setValueAtTime(0.02, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    
+    noiseSource.start(now + 0.002);
   };
   
-  const playCompletionSound = () => {
-    // Soft bell sound when typing completes
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  // Space bar sound (different from regular keys)
+  const playSpacebarClick = () => {
+    const now = audioContext.currentTime;
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const filter = audioContext.createBiquadFilter();
     
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
-    oscillator.type = 'sine';
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioContext.destination);
     
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.04, audioContext.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.25);
+    // Lower, duller sound for spacebar
+    osc.frequency.setValueAtTime(150 + Math.random() * 100, now);
+    osc.type = 'square';
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(500, now);
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.25);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.1, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    
+    osc.start(now);
+    osc.stop(now + 0.08);
+  };
+  
+  // Typewriter bell sound (end of line)
+  const playBell = () => {
+    const now = audioContext.currentTime;
+    
+    // Create a classic typewriter bell
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    
+    osc.frequency.setValueAtTime(2000, now);
+    osc.frequency.exponentialRampToValueAtTime(1800, now + 0.1);
+    osc.type = 'sine';
+    
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    
+    osc.start(now);
+    osc.stop(now + 0.4);
+  };
+  
+  // Carriage return sound (heavy mechanical sound)
+  const playCarriageReturn = () => {
+    const now = audioContext.currentTime;
+    
+    // Heavy mechanical sliding sound
+    const osc1 = audioContext.createOscillator();
+    const gain1 = audioContext.createGain();
+    const filter1 = audioContext.createBiquadFilter();
+    
+    osc1.connect(filter1);
+    filter1.connect(gain1);
+    gain1.connect(audioContext.destination);
+    
+    osc1.frequency.setValueAtTime(100, now);
+    osc1.frequency.linearRampToValueAtTime(80, now + 0.2);
+    osc1.type = 'sawtooth';
+    filter1.type = 'lowpass';
+    filter1.frequency.setValueAtTime(300, now);
+    
+    gain1.gain.setValueAtTime(0, now);
+    gain1.gain.linearRampToValueAtTime(0.06, now + 0.02);
+    gain1.gain.linearRampToValueAtTime(0.04, now + 0.15);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    
+    osc1.start(now);
+    osc1.stop(now + 0.25);
+    
+    // Final thunk at the end
+    setTimeout(() => {
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      
+      osc2.connect(gain2);
+      gain2.connect(audioContext.destination);
+      
+      osc2.frequency.setValueAtTime(200, audioContext.currentTime);
+      osc2.type = 'square';
+      
+      gain2.gain.setValueAtTime(0, audioContext.currentTime);
+      gain2.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.005);
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.03);
+      
+      osc2.start(audioContext.currentTime);
+      osc2.stop(audioContext.currentTime + 0.03);
+    }, 180);
+  };
+  
+  // Final completion ding (like reaching end of document)
+  const playCompletionDing = () => {
+    const now = audioContext.currentTime;
+    
+    // Create a satisfying completion sound (like a small desk bell)
+    const frequencies = [800, 1000, 1200]; // Chord
+    
+    frequencies.forEach((freq, index) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      
+      osc.frequency.setValueAtTime(freq, now + index * 0.05);
+      osc.type = 'sine';
+      
+      gain.gain.setValueAtTime(0, now + index * 0.05);
+      gain.gain.linearRampToValueAtTime(0.04, now + index * 0.05 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.05 + 0.6);
+      
+      osc.start(now + index * 0.05);
+      osc.stop(now + index * 0.05 + 0.6);
+    });
   };
   
   return {
-    play: playTypewriterClick,
-    playCompletion: playCompletionSound,
+    playKey: playKeyClick,
+    playSpace: playSpacebarClick,
+    playBell: playBell,
+    playCarriageReturn: playCarriageReturn,
+    playCompletion: playCompletionDing,
     context: audioContext
   };
 };
 
-const enhancedTypewriter = createEnhancedTypewriterSound();
+const realisticTypewriter = createRealisticTypewriterSound();
 
 const sounds = {
   typewriter: createAudio('data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU='),
-  enhancedTypewriter: enhancedTypewriter, // Add the enhanced typewriter
+  realisticTypewriter: realisticTypewriter, // Add the realistic typewriter
   select: createAudio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'),
   click: createAudio('data:audio/wav;base64,UklGRXEAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUQAAAB/f39/gICAgICAgH9/f39/f39/f39/f4CAgICAgIB/f39/f39/f39/f3+AgICAgICAgICAgH9/f39/f39/f39/f39/f39/f39/fw==')
 };
@@ -211,7 +364,7 @@ function showDialogBox(title, message, options = []) {
   messageElement.style.letterSpacing = '1px';
   innerContainer.appendChild(messageElement);
 
-  // Typewriter effect with enhanced sound
+  // Typewriter effect with realistic sound
   let charIndex = 0;
   let typingComplete = false;
   const typeWriter = () => {
@@ -219,13 +372,13 @@ function showDialogBox(title, message, options = []) {
       messageElement.textContent = message.substring(0, charIndex + 1);
       charIndex++;
       
-      // Use enhanced typewriter sound for better audio experience
+      // Use realistic typewriter sound for better audio experience
       const char = message[charIndex - 1];
       if (char !== ' ' && charIndex % 2 === 0) {
         try {
-          sounds.enhancedTypewriter.play();
+          sounds.realisticTypewriter.playKey();
         } catch (e) {
-          // Fallback to original sound if enhanced fails
+          // Fallback to original sound if realistic fails
           sounds.typewriter.currentTime = 0;
           sounds.typewriter.play();
         }
@@ -244,7 +397,7 @@ function showDialogBox(title, message, options = []) {
       
       // Play completion sound
       try {
-        sounds.enhancedTypewriter.playCompletion();
+        sounds.realisticTypewriter.playCompletion();
       } catch (e) {
         console.log("Completion sound error:", e);
       }
