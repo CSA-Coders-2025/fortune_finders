@@ -769,7 +769,7 @@ class StatsManager {
                         ${this.generateProgressDots()}
                     </div>
                     <div style="color: #888; font-size: 8px;">
-                        Press any key to continue
+                        Press Enter to continue
                     </div>
                 </div>
             </div>
@@ -787,8 +787,11 @@ class StatsManager {
         
         // Add keyboard listener to dismiss
         const dismissHandler = (e) => {
-            this.dismissNotification(notification);
-            document.removeEventListener('keydown', dismissHandler);
+            // Only respond to Enter key
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                this.dismissNotification(notification);
+                document.removeEventListener('keydown', dismissHandler);
+            }
         };
         document.addEventListener('keydown', dismissHandler);
         
