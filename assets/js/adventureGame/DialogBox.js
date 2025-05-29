@@ -498,6 +498,12 @@ function showDialogBox(title, message, options = []) {
       typingComplete = true;
       messageElement.classList.remove('typing');
       
+      // Hide skip hint
+      const skipHint = document.getElementById('skip-hint');
+      if (skipHint) {
+        skipHint.style.display = 'none';
+      }
+      
       // Remove skip handler since typing is done
       document.removeEventListener('keydown', skipHandler);
       
