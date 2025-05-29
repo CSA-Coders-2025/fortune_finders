@@ -338,6 +338,19 @@ class DialogueSystem {
   closeDialogue() {
     if (!this.isOpen) return;
     
+    // Stop any ongoing typewriter effect
+    this.isTyping = false;
+    if (this.typewriterTimeout) {
+      clearTimeout(this.typewriterTimeout);
+      this.typewriterTimeout = null;
+    }
+    
+    // Remove typing cursor styling
+    if (this.dialogueText) {
+      this.dialogueText.style.borderRight = "none";
+      this.dialogueText.style.animation = "none";
+    }
+    
     // Hide the dialogue box
     this.dialogueBox.style.display = "none";
     this.isOpen = false;
