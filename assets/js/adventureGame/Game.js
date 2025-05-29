@@ -962,6 +962,179 @@ class StatsManager {
             easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         });
     }
+
+    initAudioToggle() {
+        // Check for existing audio preference
+        const isAudioEnabled = localStorage.getItem('gameAudioEnabled') !== 'false';
+        
+        // Create audio toggle button container
+        const audioToggleContainer = document.createElement('div');
+        audioToggleContainer.id = 'audio-toggle-container';
+        audioToggleContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        `;
+        
+        // Create the toggle button
+        const audioButton = document.createElement('button');
+        audioButton.id = 'audio-toggle-button';
+        audioButton.innerHTML = isAudioEnabled ? '🔊' : '🔇';
+        audioButton.title = isAudioEnabled ? 'Click to mute audio' : 'Click to enable audio';
+        audioButton.style.cssText = `
+            background: #000;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            animation: glowBorder 2s infinite alternate;
+        `;
+        
+        // Add label
+        const audioLabel = document.createElement('span');
+        audioLabel.style.cssText = `
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            opacity: 0.8;
+        `;
+        audioLabel.textContent = isAudioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+        
+        // Add click functionality
+        audioButton.addEventListener('click', () => {
+            const currentState = localStorage.getItem('gameAudioEnabled') !== 'false';
+            const newState = !currentState;
+            
+            // Update localStorage
+            localStorage.setItem('gameAudioEnabled', newState.toString());
+            
+            // Update button appearance
+            audioButton.innerHTML = newState ? '🔊' : '🔇';
+            audioButton.title = newState ? 'Click to mute audio' : 'Click to enable audio';
+            audioLabel.textContent = newState ? 'AUDIO ON' : 'AUDIO OFF';
+            
+            // Update global audio state
+            window.gameAudioEnabled = newState;
+            
+            // Play a confirmation sound if audio is being enabled
+            if (newState) {
+                this.playConfirmationSound();
+            }
+            
+            // Show brief feedback
+            this.showAudioToggleFeedback(newState);
+        });
+        
+        // Add hover effects
+        audioButton.addEventListener('mouseenter', () => {
+            audioButton.style.transform = 'scale(1.05)';
+            audioButton.style.borderColor = '#ffd700';
+            audioButton.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
+        });
+        
+        audioButton.addEventListener('mouseleave', () => {
+            audioButton.style.transform = 'scale(1)';
+            audioButton.style.borderColor = '#fff';
+            audioButton.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+        });
+        
+        // Assemble and add to page
+        audioToggleContainer.appendChild(audioButton);
+        audioToggleContainer.appendChild(audioLabel);
+        document.body.appendChild(audioToggleContainer);
+        
+        // Set global audio state
+        window.gameAudioEnabled = isAudioEnabled;
+        
+        // Add CSS for animations if not present
+        if (!document.getElementById('audio-toggle-styles')) {
+            const style = document.createElement('style');
+            style.id = 'audio-toggle-styles';
+            style.textContent = `
+                @keyframes audioFeedback {
+                    0% { transform: scale(1) rotate(0deg); }
+                    25% { transform: scale(1.1) rotate(-5deg); }
+                    50% { transform: scale(1.2) rotate(5deg); }
+                    75% { transform: scale(1.1) rotate(-2deg); }
+                    100% { transform: scale(1) rotate(0deg); }
+                }
+                
+                .audio-feedback {
+                    animation: audioFeedback 0.5s ease-out;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    playConfirmationSound() {
+        // Play a brief confirmation beep when audio is enabled
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (e) {
+            console.log("Confirmation sound error:", e);
+        }
+    }
+    
+    showAudioToggleFeedback(isEnabled) {
+        // Show visual feedback when audio is toggled
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: ${isEnabled ? '#4CAF50' : '#f44336'};
+            padding: 20px 30px;
+            border: 2px solid ${isEnabled ? '#4CAF50' : '#f44336'};
+            border-radius: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            z-index: 10001;
+            pointer-events: none;
+            animation: audioFeedback 0.5s ease-out;
+            box-shadow: 0 0 20px rgba(${isEnabled ? '76, 175, 80' : '244, 67, 54'}, 0.5);
+        `;
+        feedback.textContent = isEnabled ? '🔊 AUDIO ENABLED' : '🔇 AUDIO DISABLED';
+        
+        document.body.appendChild(feedback);
+        
+        // Remove feedback after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 1000);
+    }
 }
 
 class InventoryManager {
@@ -1626,6 +1799,175 @@ class Game {
     }
 
     initAudioToggle() {
+        // Check for existing audio preference
+        const isAudioEnabled = localStorage.getItem('gameAudioEnabled') !== 'false';
+        
+        // Create audio toggle button container
+        const audioToggleContainer = document.createElement('div');
+        audioToggleContainer.id = 'audio-toggle-container';
+        audioToggleContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        `;
+        
+        // Create the toggle button
+        const audioButton = document.createElement('button');
+        audioButton.id = 'audio-toggle-button';
+        audioButton.innerHTML = isAudioEnabled ? '🔊' : '🔇';
+        audioButton.title = isAudioEnabled ? 'Click to mute audio' : 'Click to enable audio';
+        audioButton.style.cssText = `
+            background: #000;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            animation: glowBorder 2s infinite alternate;
+        `;
+        
+        // Add label
+        const audioLabel = document.createElement('span');
+        audioLabel.style.cssText = `
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            opacity: 0.8;
+        `;
+        audioLabel.textContent = isAudioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+        
+        // Add click functionality
+        audioButton.addEventListener('click', () => {
+            const currentState = localStorage.getItem('gameAudioEnabled') !== 'false';
+            const newState = !currentState;
+            
+            // Update localStorage
+            localStorage.setItem('gameAudioEnabled', newState.toString());
+            
+            // Update button appearance
+            audioButton.innerHTML = newState ? '🔊' : '🔇';
+            audioButton.title = newState ? 'Click to mute audio' : 'Click to enable audio';
+            audioLabel.textContent = newState ? 'AUDIO ON' : 'AUDIO OFF';
+            
+            // Update global audio state
+            window.gameAudioEnabled = newState;
+            
+            // Play a confirmation sound if audio is being enabled
+            if (newState) {
+                this.playConfirmationSound();
+            }
+            
+            // Show brief feedback
+            this.showAudioToggleFeedback(newState);
+        });
+        
+        // Add hover effects
+        audioButton.addEventListener('mouseenter', () => {
+            audioButton.style.transform = 'scale(1.05)';
+            audioButton.style.borderColor = '#ffd700';
+            audioButton.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
+        });
+        
+        audioButton.addEventListener('mouseleave', () => {
+            audioButton.style.transform = 'scale(1)';
+            audioButton.style.borderColor = '#fff';
+            audioButton.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+        });
+        
+        // Assemble and add to page
+        audioToggleContainer.appendChild(audioButton);
+        audioToggleContainer.appendChild(audioLabel);
+        document.body.appendChild(audioToggleContainer);
+        
+        // Set global audio state
+        window.gameAudioEnabled = isAudioEnabled;
+        
+        // Add CSS for animations if not present
+        if (!document.getElementById('audio-toggle-styles')) {
+            const style = document.createElement('style');
+            style.id = 'audio-toggle-styles';
+            style.textContent = `
+                @keyframes audioFeedback {
+                    0% { transform: scale(1) rotate(0deg); }
+                    25% { transform: scale(1.1) rotate(-5deg); }
+                    50% { transform: scale(1.2) rotate(5deg); }
+                    75% { transform: scale(1.1) rotate(-2deg); }
+                    100% { transform: scale(1) rotate(0deg); }
+                }
+                
+                .audio-feedback {
+                    animation: audioFeedback 0.5s ease-out;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    playConfirmationSound() {
+        // Play a brief confirmation beep when audio is enabled
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (e) {
+            console.log("Confirmation sound error:", e);
+        }
+    }
+    
+    showAudioToggleFeedback(isEnabled) {
+        // Show visual feedback when audio is toggled
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: ${isEnabled ? '#4CAF50' : '#f44336'};
+            padding: 20px 30px;
+            border: 2px solid ${isEnabled ? '#4CAF50' : '#f44336'};
+            border-radius: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            z-index: 10001;
+            pointer-events: none;
+            animation: audioFeedback 0.5s ease-out;
+            box-shadow: 0 0 20px rgba(${isEnabled ? '76, 175, 80' : '244, 67, 54'}, 0.5);
+        `;
+        feedback.textContent = isEnabled ? '🔊 AUDIO ENABLED' : '🔇 AUDIO DISABLED';
+        
+        document.body.appendChild(feedback);
+        
+        // Remove feedback after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
         // Implementation of initAudioToggle method
     }
 }
