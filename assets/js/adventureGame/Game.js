@@ -147,6 +147,9 @@ class StatsManager {
 
         // Initialize audio toggle button
         this.initAudioToggle();
+        
+        // Initialize ambient sound system
+        this.initAmbientSounds();
 
         // Add retro stats styles
         const style = document.createElement('style');
@@ -1134,6 +1137,272 @@ class StatsManager {
                 feedback.parentNode.removeChild(feedback);
             }
         }, 1000);
+    }
+
+    initAmbientSounds() {
+        // Create ambient sound manager
+        this.ambientSoundManager = new AmbientSoundManager();
+        
+        // Start subtle ambient effects
+        this.ambientSoundManager.startAmbientLoop();
+        
+        // Add UI interaction sounds
+        this.addUIInteractionSounds();
+    }
+    
+    addUIInteractionSounds() {
+        // Add subtle hover sounds to all interactive elements
+        const addHoverSound = (element) => {
+            element.addEventListener('mouseenter', () => {
+                if (window.gameAudioEnabled !== false) {
+                    this.ambientSoundManager.playUIHoverSound();
+                }
+            });
+        };
+        
+        const addClickSound = (element) => {
+            element.addEventListener('click', () => {
+                if (window.gameAudioEnabled !== false) {
+                    this.ambientSoundManager.playUIClickSound();
+                }
+            });
+        };
+        
+        // Apply to existing and future UI elements
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) { // Element node
+                        // Add sounds to buttons
+                        const buttons = node.querySelectorAll ? node.querySelectorAll('button') : [];
+                        buttons.forEach(button => {
+                            addHoverSound(button);
+                            addClickSound(button);
+                        });
+                        
+                        // Add sounds to the element itself if it's interactive
+                        if (node.tagName === 'BUTTON' || node.style.cursor === 'pointer') {
+                            addHoverSound(node);
+                            addClickSound(node);
+                        }
+                    }
+                });
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+}
+
+// Ambient Sound Manager Class
+class AmbientSoundManager {
+    constructor() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.isLooping = false;
+        this.ambientGain = null;
+    }
+    
+    startAmbientLoop() {
+        if (this.isLooping || !window.gameAudioEnabled) return;
+        
+        this.isLooping = true;
+        this.playSubtleAmbience();
+    }
+    
+    stopAmbientLoop() {
+        this.isLooping = false;
+        if (this.ambientGain) {
+            this.ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1);
+        }
+    }
+    
+    playSubtleAmbience() {
+        if (!this.isLooping || !window.gameAudioEnabled) return;
+        
+        try {
+            // Create very subtle background ambience
+            const osc = this.audioContext.createOscillator();
+            this.ambientGain = this.audioContext.createGain();
+            const filter = this.audioContext.createBiquadFilter();
+            
+            osc.connect(filter);
+            filter.connect(this.ambientGain);
+            this.ambientGain.connect(this.audioContext.destination);
+            
+            // Very low frequency, barely audible ambient tone
+            osc.frequency.setValueAtTime(60 + Math.random() * 20, this.audioContext.currentTime);
+            osc.type = 'sine';
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(200, this.audioContext.currentTime);
+            
+            // Extremely quiet - just adds presence
+            this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            this.ambientGain.gain.linearRampToValueAtTime(0.005, this.audioContext.currentTime + 2);
+            this.ambientGain.gain.linearRampToValueAtTime(0.003, this.audioContext.currentTime + 8);
+            this.ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 10);
+            
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 10);
+            
+            // Schedule next ambient sound
+            setTimeout(() => {
+                if (this.isLooping) {
+                    this.playSubtleAmbience();
+                }
+            }, 8000 + Math.random() * 4000); // 8-12 seconds between ambient sounds
+            
+        } catch (e) {
+            console.log("Ambient sound error:", e);
+        }
+    }
+    
+    playUIHoverSound() {
+        if (!window.gameAudioEnabled) return;
+        
+        try {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+            
+            osc.frequency.setValueAtTime(800 + Math.random() * 200, this.audioContext.currentTime);
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.02, this.audioContext.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+            
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 0.1);
+        } catch (e) {
+            console.log("UI hover sound error:", e);
+        }
+    }
+    
+    playUIClickSound() {
+        if (!window.gameAudioEnabled) return;
+        
+        try {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+            
+            osc.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.05);
+            osc.type = 'square';
+            
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.03, this.audioContext.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
+            
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 0.08);
+        } catch (e) {
+            console.log("UI click sound error:", e);
+        }
+    }
+    
+    // Environmental sound effects
+    playEnvironmentalSound(type) {
+        if (!window.gameAudioEnabled) return;
+        
+        switch (type) {
+            case 'coin':
+                this.playCoinSound();
+                break;
+            case 'success':
+                this.playSuccessSound();
+                break;
+            case 'notification':
+                this.playNotificationSound();
+                break;
+        }
+    }
+    
+    playCoinSound() {
+        try {
+            // Classic coin pickup sound
+            const frequencies = [523, 659, 784]; // C, E, G
+            
+            frequencies.forEach((freq, index) => {
+                setTimeout(() => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    osc.type = 'square';
+                    
+                    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+                    
+                    osc.start(this.audioContext.currentTime);
+                    osc.stop(this.audioContext.currentTime + 0.15);
+                }, index * 50);
+            });
+        } catch (e) {
+            console.log("Coin sound error:", e);
+        }
+    }
+    
+    playSuccessSound() {
+        try {
+            // Ascending success chord
+            const frequencies = [440, 554, 659, 880]; // A, C#, E, A
+            
+            frequencies.forEach((freq, index) => {
+                setTimeout(() => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    osc.type = 'sine';
+                    
+                    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.08, this.audioContext.currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
+                    
+                    osc.start(this.audioContext.currentTime);
+                    osc.stop(this.audioContext.currentTime + 0.4);
+                }, index * 100);
+            });
+        } catch (e) {
+            console.log("Success sound error:", e);
+        }
+    }
+    
+    playNotificationSound() {
+        try {
+            // Gentle notification chime
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+            
+            osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1000, this.audioContext.currentTime + 0.1);
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.05, this.audioContext.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+            
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 0.3);
+        } catch (e) {
+            console.log("Notification sound error:", e);
+        }
     }
 }
 
