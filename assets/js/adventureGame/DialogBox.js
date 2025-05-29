@@ -364,19 +364,46 @@ function showDialogBox(title, message, options = []) {
   messageElement.style.letterSpacing = '1px';
   innerContainer.appendChild(messageElement);
 
-  // Typewriter effect with realistic sound
+  // Typewriter effect with realistic mechanical sounds
   let charIndex = 0;
   let typingComplete = false;
+  let lineLength = 0; // Track characters per line for typewriter bell
+  const maxLineLength = 70; // Typical typewriter line length
+  
   const typeWriter = () => {
     if (charIndex < message.length) {
       messageElement.textContent = message.substring(0, charIndex + 1);
+      const char = message[charIndex];
       charIndex++;
+      lineLength++;
       
-      // Use realistic typewriter sound for better audio experience
-      const char = message[charIndex - 1];
-      if (char !== ' ' && charIndex % 2 === 0) {
+      // Play appropriate sound based on character type
+      if (charIndex % 2 === 0) { // Reduce frequency to avoid overwhelming
         try {
-          sounds.realisticTypewriter.playKey();
+          if (char === ' ') {
+            // Different sound for spacebar
+            sounds.realisticTypewriter.playSpace();
+          } else if (char === '\n' || char === '\r') {
+            // Carriage return sound for new lines
+            sounds.realisticTypewriter.playCarriageReturn();
+            lineLength = 0; // Reset line length
+          } else if ('.,!?;:'.includes(char)) {
+            // Slightly different sound for punctuation (more emphasis)
+            sounds.realisticTypewriter.playKey();
+            // Add a tiny pause after punctuation
+            setTimeout(typeWriter, 150 + Math.random() * 100);
+            return;
+          } else {
+            // Regular key sound
+            sounds.realisticTypewriter.playKey();
+          }
+          
+          // Typewriter bell when approaching end of line
+          if (lineLength >= maxLineLength && char === ' ') {
+            sounds.realisticTypewriter.playBell();
+            lineLength = 0; // Reset after bell
+          }
+          
         } catch (e) {
           // Fallback to original sound if realistic fails
           sounds.typewriter.currentTime = 0;
@@ -384,10 +411,24 @@ function showDialogBox(title, message, options = []) {
         }
       }
       
-      // Vary typing speed slightly for more natural feel
-      const baseSpeed = 15;
-      const variance = Math.random() * 10; // 0-10ms variance
-      const charSpeed = char === '.' || char === '!' || char === '?' ? baseSpeed + 200 : baseSpeed; // Pause longer at sentence endings
+      // Vary typing speed based on character and add realistic delays
+      const baseSpeed = 45; // Slower, more realistic typing speed
+      let variance = Math.random() * 15; // 0-15ms variance
+      
+      // Different speeds for different characters
+      let charSpeed = baseSpeed;
+      if (char === ' ') {
+        charSpeed = baseSpeed - 10; // Spacebar is usually faster
+      } else if ('.,!?;:'.includes(char)) {
+        charSpeed = baseSpeed + 50; // Pause after punctuation
+      } else if (char.match(/[A-Z]/)) {
+        charSpeed = baseSpeed + 20; // Slight pause for capitals (shift key)
+      }
+      
+      // Occasional "thinking" pauses (like a real typist)
+      if (Math.random() < 0.05) { // 5% chance of pause
+        variance += 200 + Math.random() * 300; // 200-500ms thinking pause
+      }
       
       setTimeout(typeWriter, charSpeed + variance);
     } else if (!typingComplete) {
@@ -395,16 +436,19 @@ function showDialogBox(title, message, options = []) {
       typingComplete = true;
       messageElement.classList.remove('typing');
       
-      // Play completion sound
-      try {
-        sounds.realisticTypewriter.playCompletion();
-      } catch (e) {
-        console.log("Completion sound error:", e);
-      }
+      // Play completion sound with slight delay for realism
+      setTimeout(() => {
+        try {
+          sounds.realisticTypewriter.playCompletion();
+        } catch (e) {
+          console.log("Completion sound error:", e);
+        }
+      }, 300);
     }
   };
-  // Reduce initial delay before typing starts
-  setTimeout(typeWriter, 300);
+  
+  // Start typing after a brief delay (like putting paper in typewriter)
+  setTimeout(typeWriter, 500);
 
   const buttonContainer = document.createElement('div');
   buttonContainer.style.display = 'flex';
