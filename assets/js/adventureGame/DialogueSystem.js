@@ -291,7 +291,7 @@ class DialogueSystem {
     this.startTypewriterEffect(message);
     
     // Play opening sound effect if enabled
-    if (this.sound) {
+    if (this.sound && window.gameAudioEnabled !== false) {
       this.sound.currentTime = 0;
       this.sound.play().catch(e => console.log("Sound play error:", e));
     }
