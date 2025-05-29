@@ -411,6 +411,12 @@ function showDialogBox(title, message, options = []) {
       messageElement.classList.remove('typing');
       typingComplete = true;
       
+      // Hide skip hint
+      const skipHint = document.getElementById('skip-hint');
+      if (skipHint) {
+        skipHint.style.display = 'none';
+      }
+      
       // Play a quick completion sound
       try {
         sounds.realisticTypewriter.playCompletion();
