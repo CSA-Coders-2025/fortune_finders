@@ -211,21 +211,43 @@ function showDialogBox(title, message, options = []) {
   messageElement.style.letterSpacing = '1px';
   innerContainer.appendChild(messageElement);
 
-  // Typewriter effect with sound
+  // Typewriter effect with enhanced sound
   let charIndex = 0;
+  let typingComplete = false;
   const typeWriter = () => {
     if (charIndex < message.length) {
       messageElement.textContent = message.substring(0, charIndex + 1);
       charIndex++;
-      // Only play sound for non-space characters and every other character to reduce sound frequency
-      if (message[charIndex - 1] !== ' ' && charIndex % 2 === 0) {
-        sounds.typewriter.currentTime = 0;
-        sounds.typewriter.play();
+      
+      // Use enhanced typewriter sound for better audio experience
+      const char = message[charIndex - 1];
+      if (char !== ' ' && charIndex % 2 === 0) {
+        try {
+          sounds.enhancedTypewriter.play();
+        } catch (e) {
+          // Fallback to original sound if enhanced fails
+          sounds.typewriter.currentTime = 0;
+          sounds.typewriter.play();
+        }
       }
-      // Speed up typing even more (from 25ms to 15ms)
-      setTimeout(typeWriter, 15);
-    } else {
+      
+      // Vary typing speed slightly for more natural feel
+      const baseSpeed = 15;
+      const variance = Math.random() * 10; // 0-10ms variance
+      const charSpeed = char === '.' || char === '!' || char === '?' ? baseSpeed + 200 : baseSpeed; // Pause longer at sentence endings
+      
+      setTimeout(typeWriter, charSpeed + variance);
+    } else if (!typingComplete) {
+      // Typing just completed
+      typingComplete = true;
       messageElement.classList.remove('typing');
+      
+      // Play completion sound
+      try {
+        sounds.enhancedTypewriter.playCompletion();
+      } catch (e) {
+        console.log("Completion sound error:", e);
+      }
     }
   };
   // Reduce initial delay before typing starts
