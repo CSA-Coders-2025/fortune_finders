@@ -1968,7 +1968,7 @@ class Game {
             if (feedback.parentNode) {
                 feedback.parentNode.removeChild(feedback);
             }
-        // Implementation of initAudioToggle method
+        }, 1000);
     }
 }
 
