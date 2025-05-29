@@ -575,12 +575,12 @@ class StatsManager {
     /**
      * Give a specific cookie for an NPC interaction
      * @param {string} npcId - The ID of the NPC
-     * @param {string} reward - The reward/cookie value (optional)
+     * @param {string} reward - The reward/cookie value (optional, defaults to "completed")
      * @param {string} objective - The new objective to show (optional)
      */
     giveNpcCookie(npcId, reward = "completed", objective = null) {
         const cookieName = `npc_${npcId}`;
-        const cookieValue = reward;
+        const cookieValue = "completed"; // Always use "completed" for consistency
         const expiryDays = 30;
         
         // Check if this is the first time getting a cookie from this NPC
@@ -596,6 +596,7 @@ class StatsManager {
         }
         
         // Show a notification that they received a cookie with objective
+        // Use the original reward parameter for display purposes only
         this.showNpcCookieNotification(npcId, reward, objective);
         
         // Update the UI to reflect the new cookie count
@@ -613,7 +614,7 @@ class StatsManager {
             }, 500); // Slight delay for better visual timing
         }
         
-        console.log(`NPC Cookie awarded: ${cookieName}=${cookieValue}`);
+        console.log(`NPC Cookie awarded: ${cookieName}=${cookieValue} (displayed as: ${reward})`);
     }
 
     /**
@@ -751,7 +752,11 @@ class StatsManager {
         }
         
         // Build notification content
-        const cookieEmoji = reward === 'quiz_completed' ? '🧠' : reward === 'dialogue_completed' ? '💬' : '🍪';
+        const cookieEmoji = reward.includes('quiz') || reward.includes('question') ? '🧠' : 
+                           reward.includes('dialogue') || reward.includes('talk') ? '💬' : 
+                           reward.includes('casino') || reward.includes('game') ? '🎰' :
+                           reward.includes('computer') || reward.includes('tech') ? '💻' :
+                           reward.includes('bank') || reward.includes('finance') ? '🏦' : '🍪';
         const npcDisplayName = npcId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         
         notification.innerHTML = `
@@ -1148,6 +1153,50 @@ class StatsManager {
         
         // Add UI interaction sounds
         this.addUIInteractionSounds();
+        
+        // Set up environment detection
+        this.setupEnvironmentDetection();
+    }
+    
+    setupEnvironmentDetection() {
+        // Check current level periodically and update ambient environment
+        setInterval(() => {
+            if (this.gameControl && this.gameControl.currentLevel) {
+                const levelName = this.gameControl.currentLevel.constructor.name.toLowerCase();
+                let environment = 'default';
+                
+                // Map level names to environments
+                if (levelName.includes('office')) {
+                    environment = 'office';
+                } else if (levelName.includes('casino')) {
+                    environment = 'casino';
+                } else if (levelName.includes('bank')) {
+                    environment = 'bank';
+                } else if (levelName.includes('airport')) {
+                    environment = 'airport';
+                } else if (levelName.includes('desert')) {
+                    environment = 'desert';
+                } else if (levelName.includes('underground') || levelName.includes('cave')) {
+                    environment = 'underground';
+                }
+                
+                // Update ambient environment if it changed
+                if (this.ambientSoundManager.currentEnvironment !== environment) {
+                    this.ambientSoundManager.setEnvironment(environment);
+                }
+            }
+        }, 2000); // Check every 2 seconds
+    }
+    
+    // Method to manually set environment (can be called from level files)
+    setAmbientEnvironment(environment) {
+        if (this.ambientSoundManager) {
+            this.ambientSoundManager.setEnvironment(environment);
+        }
+    }
+    
+    addUIInteractionSounds() {
+        // Add subtle hover sounds to all interactive elements
     }
     
     addUIInteractionSounds() {
@@ -1194,19 +1243,61 @@ class StatsManager {
     }
 }
 
-// Ambient Sound Manager Class
+// Minecraft-Style Ambient Sound Manager Class
 class AmbientSoundManager {
     constructor() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.isLooping = false;
         this.ambientGain = null;
+        this.currentEnvironment = 'default';
+        this.lastAmbientTime = 0;
+        this.ambientInterval = 15000; // 15 seconds minimum between ambient sounds
+        
+        // Minecraft-style ambient sound sets
+        this.ambientSounds = {
+            'default': {
+                sounds: ['wind', 'distant_echo', 'subtle_drone'],
+                baseFreq: 60,
+                volume: 0.02
+            },
+            'office': {
+                sounds: ['air_conditioning', 'distant_typing', 'elevator_hum', 'fluorescent_buzz'],
+                baseFreq: 120,
+                volume: 0.015
+            },
+            'casino': {
+                sounds: ['distant_slots', 'muffled_chatter', 'air_circulation', 'carpet_ambience'],
+                baseFreq: 80,
+                volume: 0.018
+            },
+            'bank': {
+                sounds: ['vault_echo', 'marble_ambience', 'security_hum', 'distant_footsteps'],
+                baseFreq: 100,
+                volume: 0.02
+            },
+            'airport': {
+                sounds: ['terminal_ambience', 'distant_announcements', 'air_circulation', 'crowd_murmur'],
+                baseFreq: 90,
+                volume: 0.025
+            },
+            'desert': {
+                sounds: ['wind_sand', 'distant_howl', 'desert_drone', 'heat_shimmer'],
+                baseFreq: 50,
+                volume: 0.02
+            },
+            'underground': {
+                sounds: ['cave_echo', 'water_drip', 'stone_settle', 'deep_rumble'],
+                baseFreq: 40,
+                volume: 0.03
+            }
+        };
     }
     
     startAmbientLoop() {
         if (this.isLooping || !window.gameAudioEnabled) return;
         
         this.isLooping = true;
-        this.playSubtleAmbience();
+        this.scheduleNextAmbient();
     }
     
     stopAmbientLoop() {
@@ -1216,47 +1307,343 @@ class AmbientSoundManager {
         }
     }
     
-    playSubtleAmbience() {
+    setEnvironment(environment) {
+        this.currentEnvironment = environment || 'default';
+        console.log(`Ambient environment set to: ${this.currentEnvironment}`);
+    }
+    
+    scheduleNextAmbient() {
         if (!this.isLooping || !window.gameAudioEnabled) return;
         
+        // Random interval between 8-25 seconds (like Minecraft)
+        const nextInterval = 8000 + Math.random() * 17000;
+        
+        setTimeout(() => {
+            if (this.isLooping) {
+                this.playRandomAmbientSound();
+                this.scheduleNextAmbient();
+            }
+        }, nextInterval);
+    }
+    
+    playRandomAmbientSound() {
+        const envData = this.ambientSounds[this.currentEnvironment] || this.ambientSounds['default'];
+        const soundType = envData.sounds[Math.floor(Math.random() * envData.sounds.length)];
+        
+        this.playAmbientSound(soundType, envData);
+    }
+    
+    playAmbientSound(soundType, envData) {
+        if (!window.gameAudioEnabled) return;
+        
         try {
-            // Create very subtle background ambience
-            const osc = this.audioContext.createOscillator();
-            this.ambientGain = this.audioContext.createGain();
-            const filter = this.audioContext.createBiquadFilter();
-            
-            osc.connect(filter);
-            filter.connect(this.ambientGain);
-            this.ambientGain.connect(this.audioContext.destination);
-            
-            // Very low frequency, barely audible ambient tone
-            osc.frequency.setValueAtTime(60 + Math.random() * 20, this.audioContext.currentTime);
-            osc.type = 'sine';
-            
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(200, this.audioContext.currentTime);
-            
-            // Extremely quiet - just adds presence
-            this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-            this.ambientGain.gain.linearRampToValueAtTime(0.005, this.audioContext.currentTime + 2);
-            this.ambientGain.gain.linearRampToValueAtTime(0.003, this.audioContext.currentTime + 8);
-            this.ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 10);
-            
-            osc.start(this.audioContext.currentTime);
-            osc.stop(this.audioContext.currentTime + 10);
-            
-            // Schedule next ambient sound
-            setTimeout(() => {
-                if (this.isLooping) {
-                    this.playSubtleAmbience();
-                }
-            }, 8000 + Math.random() * 4000); // 8-12 seconds between ambient sounds
-            
+            switch (soundType) {
+                case 'wind':
+                    this.createWindSound(envData);
+                    break;
+                case 'cave_echo':
+                    this.createCaveEcho();
+                    break;
+                case 'water_drip':
+                    this.createWaterDrip();
+                    break;
+                case 'distant_echo':
+                    this.createDistantEcho();
+                    break;
+                case 'air_conditioning':
+                    this.createAirConditioning();
+                    break;
+                case 'distant_typing':
+                    this.createDistantTyping();
+                    break;
+                case 'fluorescent_buzz':
+                    this.createFluorescentBuzz();
+                    break;
+                case 'distant_slots':
+                    this.createDistantSlots();
+                    break;
+                case 'vault_echo':
+                    this.createVaultEcho();
+                    break;
+                case 'terminal_ambience':
+                    this.createTerminalAmbience();
+                    break;
+                case 'wind_sand':
+                    this.createSandWind();
+                    break;
+                case 'deep_rumble':
+                    this.createDeepRumble();
+                    break;
+                default:
+                    this.createGenericAmbient(envData);
+            }
         } catch (e) {
             console.log("Ambient sound error:", e);
         }
     }
     
+    // Minecraft-style wind sound
+    createWindSound(envData) {
+        const duration = 3 + Math.random() * 4; // 3-7 seconds
+        
+        // Create wind with filtered noise
+        const bufferSize = this.audioContext.sampleRate * duration;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const output = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = (Math.random() * 2 - 1) * (0.5 + 0.5 * Math.sin(i / bufferSize * Math.PI));
+        }
+        
+        const source = this.audioContext.createBufferSource();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        source.buffer = buffer;
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(200 + Math.random() * 100, this.audioContext.currentTime);
+        filter.Q.setValueAtTime(0.5, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(envData.volume, this.audioContext.currentTime + 0.5);
+        gain.gain.linearRampToValueAtTime(envData.volume * 0.7, this.audioContext.currentTime + duration - 1);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        source.start(this.audioContext.currentTime);
+    }
+    
+    // Classic Minecraft cave echo
+    createCaveEcho() {
+        const frequencies = [180, 220, 260]; // Eerie chord
+        const duration = 2 + Math.random() * 3;
+        
+        frequencies.forEach((freq, index) => {
+            setTimeout(() => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+                const delay = this.audioContext.createDelay(2);
+                const delayGain = this.audioContext.createGain();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.audioContext.destination);
+                
+                // Echo effect
+                gain.connect(delay);
+                delay.connect(delayGain);
+                delayGain.connect(gain);
+                
+                osc.frequency.setValueAtTime(freq + Math.random() * 20, this.audioContext.currentTime);
+                osc.type = 'sine';
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(400, this.audioContext.currentTime);
+                
+                delay.delayTime.setValueAtTime(0.3 + Math.random() * 0.4, this.audioContext.currentTime);
+                delayGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                
+                gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.025, this.audioContext.currentTime + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+                
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + duration);
+            }, index * 200);
+        });
+    }
+    
+    // Water drip sound (classic Minecraft cave sound)
+    createWaterDrip() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.1);
+        osc.type = 'sine';
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04, this.audioContext.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.8);
+    }
+    
+    // Distant echo effect
+    createDistantEcho() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        const delay = this.audioContext.createDelay(1);
+        const delayGain = this.audioContext.createGain();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        gain.connect(delay);
+        delay.connect(delayGain);
+        delayGain.connect(gain);
+        
+        osc.frequency.setValueAtTime(150 + Math.random() * 100, this.audioContext.currentTime);
+        osc.type = 'triangle';
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
+        
+        delay.delayTime.setValueAtTime(0.5, this.audioContext.currentTime);
+        delayGain.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.02, this.audioContext.currentTime + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 3);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 3);
+    }
+    
+    // Office air conditioning hum
+    createAirConditioning() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.frequency.setValueAtTime(120 + Math.random() * 20, this.audioContext.currentTime);
+        osc.type = 'sawtooth';
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(250, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.audioContext.currentTime + 1);
+        gain.gain.linearRampToValueAtTime(0.008, this.audioContext.currentTime + 4);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 6);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 6);
+    }
+    
+    // Distant typing sounds
+    createDistantTyping() {
+        const typeCount = 3 + Math.random() * 7; // 3-10 keystrokes
+        
+        for (let i = 0; i < typeCount; i++) {
+            setTimeout(() => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.audioContext.destination);
+                
+                osc.frequency.setValueAtTime(800 + Math.random() * 400, this.audioContext.currentTime);
+                osc.type = 'square';
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                
+                gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.005, this.audioContext.currentTime + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+                
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.1);
+            }, i * (100 + Math.random() * 200));
+        }
+    }
+    
+    // Casino slot machine sounds in distance
+    createDistantSlots() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.frequency.setValueAtTime(400, this.audioContext.currentTime);
+        osc.frequency.linearRampToValueAtTime(350, this.audioContext.currentTime + 0.5);
+        osc.type = 'square';
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(500, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.008, this.audioContext.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 1.5);
+    }
+    
+    // Deep underground rumble
+    createDeepRumble() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.frequency.setValueAtTime(30 + Math.random() * 20, this.audioContext.currentTime);
+        osc.type = 'sawtooth';
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(80, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04, this.audioContext.currentTime + 1);
+        gain.gain.linearRampToValueAtTime(0.03, this.audioContext.currentTime + 4);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 8);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 8);
+    }
+    
+    // Generic ambient for other environments
+    createGenericAmbient(envData) {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.frequency.setValueAtTime(envData.baseFreq + Math.random() * 40, this.audioContext.currentTime);
+        osc.type = 'sine';
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(envData.volume, this.audioContext.currentTime + 1);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 5);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 5);
+    }
+    
+    // Keep existing UI interaction sounds
     playUIHoverSound() {
         if (!window.gameAudioEnabled) return;
         
@@ -1271,7 +1658,7 @@ class AmbientSoundManager {
             osc.type = 'sine';
             
             gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-            gain.gain.linearRampToValueAtTime(0.02, this.audioContext.currentTime + 0.02);
+            gain.gain.linearRampToValueAtTime(0.01, this.audioContext.currentTime + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
             
             osc.start(this.audioContext.currentTime);
@@ -1296,112 +1683,13 @@ class AmbientSoundManager {
             osc.type = 'square';
             
             gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-            gain.gain.linearRampToValueAtTime(0.03, this.audioContext.currentTime + 0.01);
+            gain.gain.linearRampToValueAtTime(0.02, this.audioContext.currentTime + 0.01);
             gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
             
             osc.start(this.audioContext.currentTime);
             osc.stop(this.audioContext.currentTime + 0.08);
         } catch (e) {
             console.log("UI click sound error:", e);
-        }
-    }
-    
-    // Environmental sound effects
-    playEnvironmentalSound(type) {
-        if (!window.gameAudioEnabled) return;
-        
-        switch (type) {
-            case 'coin':
-                this.playCoinSound();
-                break;
-            case 'success':
-                this.playSuccessSound();
-                break;
-            case 'notification':
-                this.playNotificationSound();
-                break;
-        }
-    }
-    
-    playCoinSound() {
-        try {
-            // Classic coin pickup sound
-            const frequencies = [523, 659, 784]; // C, E, G
-            
-            frequencies.forEach((freq, index) => {
-                setTimeout(() => {
-                    const osc = this.audioContext.createOscillator();
-                    const gain = this.audioContext.createGain();
-                    
-                    osc.connect(gain);
-                    gain.connect(this.audioContext.destination);
-                    
-                    osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-                    osc.type = 'square';
-                    
-                    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
-                    
-                    osc.start(this.audioContext.currentTime);
-                    osc.stop(this.audioContext.currentTime + 0.15);
-                }, index * 50);
-            });
-        } catch (e) {
-            console.log("Coin sound error:", e);
-        }
-    }
-    
-    playSuccessSound() {
-        try {
-            // Ascending success chord
-            const frequencies = [440, 554, 659, 880]; // A, C#, E, A
-            
-            frequencies.forEach((freq, index) => {
-                setTimeout(() => {
-                    const osc = this.audioContext.createOscillator();
-                    const gain = this.audioContext.createGain();
-                    
-                    osc.connect(gain);
-                    gain.connect(this.audioContext.destination);
-                    
-                    osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-                    osc.type = 'sine';
-                    
-                    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.08, this.audioContext.currentTime + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
-                    
-                    osc.start(this.audioContext.currentTime);
-                    osc.stop(this.audioContext.currentTime + 0.4);
-                }, index * 100);
-            });
-        } catch (e) {
-            console.log("Success sound error:", e);
-        }
-    }
-    
-    playNotificationSound() {
-        try {
-            // Gentle notification chime
-            const osc = this.audioContext.createOscillator();
-            const gain = this.audioContext.createGain();
-            
-            osc.connect(gain);
-            gain.connect(this.audioContext.destination);
-            
-            osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1000, this.audioContext.currentTime + 0.1);
-            osc.type = 'sine';
-            
-            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-            gain.gain.linearRampToValueAtTime(0.05, this.audioContext.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
-            
-            osc.start(this.audioContext.currentTime);
-            osc.stop(this.audioContext.currentTime + 0.3);
-        } catch (e) {
-            console.log("Notification sound error:", e);
         }
     }
 }
@@ -1525,7 +1813,8 @@ class Game {
         });
         
         const gameLevelClasses = environment.gameLevelClasses;
-        new GameControl(this, gameLevelClasses).start();
+        this.gameControl = new GameControl(this, gameLevelClasses);
+        this.gameControl.start();
     }
 
     static main(environment) {
@@ -1842,8 +2131,8 @@ class Game {
         }
         
         return Object.entries(cookies).map(([npcId, reward]) => {
-            const emoji = reward === 'quiz_completed' ? '🧠' : reward === 'dialogue_completed' ? '💬' : '✅';
-            return `<span style="color: #4CAF50;">${emoji} ${npcId.replace(/-/g, ' ')}: ${reward}</span>`;
+            const emoji = '✅'; // Consistent emoji since all cookies are now "completed"
+            return `<span style="color: #4CAF50;">${emoji} ${npcId.replace(/-/g, ' ')}: completed</span>`;
         }).join('<br>');
     }
 
