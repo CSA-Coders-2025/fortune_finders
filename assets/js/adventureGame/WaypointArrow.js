@@ -4,7 +4,7 @@ export default class WaypointArrow {
     this.gamePath = gamePath;
     // Start at J.P. Morgan and follow the correct order as seen in GameLevelAirport.js
     this.waypointIds = [
-      'Stock- NPC',        // J.P. Morgan
+      'Stock-NPC',        // J.P. Morgan (fixed the space issue)
       'Casino-NPC',        // Frank Sinatra
       'Fidelity',          // Fidelity
       'Schwab',            // Schwab
@@ -19,7 +19,10 @@ export default class WaypointArrow {
     }
     this.arrowImg = this.createArrowElement();
     this.setupEventListeners();
-    this.moveArrowToCurrentWaypoint();
+    this.updateArrowBasedOnCookies(); // Check cookies on initialization
+    
+    // Make this instance globally accessible so the game can call methods on it
+    window.waypointArrow = this;
   }
 
   loadStep() {
@@ -69,7 +72,7 @@ export default class WaypointArrow {
 
     // These offsets (dx, dy) move the arrow just above the NPC's head
     const offsets = {
-      'Stock- NPC':        { dx: 0, dy: -60 },   // J.P. Morgan
+      'Stock-NPC':        { dx: 0, dy: -60 },   // J.P. Morgan
       'Casino-NPC':        { dx: 0, dy: -60 },   // Frank Sinatra
       'Fidelity':          { dx: 0, dy: 20},   // Lowered from -70 to -40
       'Schwab':            { dx: 0, dy: 20 },   // Lowered from -70 to -40
@@ -79,7 +82,7 @@ export default class WaypointArrow {
     };
 
     const positions = {
-      'Stock- NPC':        { x: width * 0.17, y: height * 0.8 },
+      'Stock-NPC':        { x: width * 0.17, y: height * 0.8 },
       'Casino-NPC':        { x: width * 0.15, y: height * 0.25 },
       'Fidelity':          { x: width * 0.34, y: height * 0.05 },
       'Schwab':            { x: width * 0.48, y: height * 0.05 },
@@ -100,11 +103,86 @@ export default class WaypointArrow {
     this.arrowImg.style.top = (pos.y - 24) + 'px';
   }
 
+  // Check if player has earned a cookie from a specific NPC
+  hasNpcCookie(npcId) {
+    const cookies = document.cookie.split(';');
+    const cookieName = `npc_${npcId}`;
+    const npcCookie = cookies.find(cookie => cookie.trim().startsWith(`${cookieName}=`));
+    return npcCookie !== undefined;
+  }
+
+  // Get all NPC cookies (similar to the one in Game.js)
+  getAllNpcCookies() {
+    const cookies = document.cookie.split(';');
+    const npcCookies = {};
+    
+    cookies.forEach(cookie => {
+      const trimmedCookie = cookie.trim();
+      if (trimmedCookie.startsWith('npc_')) {
+        const [name, value] = trimmedCookie.split('=');
+        const npcId = name.replace('npc_', '');
+        npcCookies[npcId] = value;
+      }
+    });
+    
+    return npcCookies;
+  }
+
+  // Update arrow position based on earned cookies
+  updateArrowBasedOnCookies() {
+    let targetStep = 0;
+    
+    // Find the furthest NPC that the player has earned a cookie from
+    for (let i = 0; i < this.waypointIds.length; i++) {
+      const npcId = this.waypointIds[i];
+      if (this.hasNpcCookie(npcId)) {
+        targetStep = Math.min(i + 1, this.waypointIds.length - 1); // Move to next NPC or stay at last
+      } else {
+        break; // Stop at first NPC without cookie
+      }
+    }
+    
+    // Only update if we need to move forward or if we're initializing
+    if (targetStep !== this.currentStep) {
+      console.log(`Waypoint arrow moving from step ${this.currentStep} to step ${targetStep}`);
+      this.currentStep = targetStep;
+      this.setCookie('waypointStep', this.currentStep, 30);
+      this.moveArrowToCurrentWaypoint();
+    } else {
+      // Still move arrow to current position (for initialization)
+      this.moveArrowToCurrentWaypoint();
+    }
+  }
+
+  // Called when a cookie is earned to check if arrow should advance
+  onCookieEarned(npcId) {
+    console.log(`Cookie earned from ${npcId}, checking waypoint advancement`);
+    
+    // Find the index of this NPC in our waypoint list
+    const npcIndex = this.waypointIds.indexOf(npcId);
+    
+    if (npcIndex !== -1 && npcIndex === this.currentStep) {
+      // This is the current target NPC, advance the arrow
+      console.log(`Advancing waypoint arrow from ${npcId} (step ${npcIndex})`);
+      this.advanceStep();
+    } else if (npcIndex !== -1) {
+      console.log(`Cookie from ${npcId} but not current target. Current step: ${this.currentStep}, NPC step: ${npcIndex}`);
+      // Update arrow position based on all cookies (in case we missed something)
+      this.updateArrowBasedOnCookies();
+    }
+  }
+
   advanceStep() {
     if (this.currentStep < this.waypointIds.length - 1) {
       this.currentStep++;
       this.setCookie('waypointStep', this.currentStep, 30);
       this.moveArrowToCurrentWaypoint();
+      
+      // Visual feedback - make arrow pulse briefly
+      this.arrowImg.style.transform = 'scale(1.2)';
+      setTimeout(() => {
+        this.arrowImg.style.transform = 'scale(1)';
+      }, 200);
     }
   }
 
@@ -115,7 +193,7 @@ export default class WaypointArrow {
   }
 
   setupEventListeners() {
-    // Right-click to reset
+    // Right-click to reset (for debugging)
     this.arrowImg.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       this.resetStep();
@@ -124,47 +202,12 @@ export default class WaypointArrow {
     // Resize handler
     window.addEventListener('resize', () => this.moveArrowToCurrentWaypoint());
 
-    // 'E' key handler
-    document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() !== 'e') return;
-      
-      try {
-        const npcId = this.waypointIds[this.currentStep] || this.waypointIds[0];
-        const pos = this.getWaypointPosition(npcId);
-        
-        let playerObj = null;
-        if (window.gameEnv && window.gameEnv.gameObjects) {
-          playerObj = window.gameEnv.gameObjects.find(obj => 
-            obj.constructor && obj.constructor.name === 'Player'
-          );
-        }
-        
-        if (!playerObj) {
-          const playerCanvas = document.querySelector('canvas[id*="player" i]');
-          if (playerCanvas && playerCanvas.getBoundingClientRect) {
-            const rect = playerCanvas.getBoundingClientRect();
-            playerObj = {
-              position: { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }
-            };
-          }
-        }
+    // Remove the automatic 'E' key advancement - now only cookies can advance the arrow
+    // The 'E' key interaction should be handled by the NPC itself when giving cookies
+  }
 
-        if (playerObj && playerObj.position) {
-          const px = playerObj.position.x;
-          const py = playerObj.position.y;
-          const dx = px - pos.x;
-          const dy = py - pos.y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          
-          if (dist < 80) {
-            this.advanceStep();
-          }
-        } else {
-          this.advanceStep();
-        }
-      } catch (err) {
-        this.advanceStep();
-      }
-    });
+  // Public method to refresh arrow position (can be called from outside)
+  refresh() {
+    this.updateArrowBasedOnCookies();
   }
 }
