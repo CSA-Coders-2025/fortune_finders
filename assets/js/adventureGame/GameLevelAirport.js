@@ -192,7 +192,12 @@ class GameLevelAirport {
             [
               { label: "Take me to the Casino", action: () => openInModal(`${pagesURI}/gamify/casinohomepage`) },
               { label: "Back to advice", action: () => dialogFunctions.giveAdvice(), keepOpen: true },
-              { label: "Maybe later", action: () => {} }
+              { label: "Thanks, Frank!", action: () => {
+                // Give NPC cookie for completing the dialogue
+                if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.giveNpcCookie(sprite_data_casino.id, "dialogue_completed");
+                }
+              } }
             ]
           );
         }
@@ -308,7 +313,12 @@ class GameLevelAirport {
             "Good day, I am J.P. Morgan, financier of industry and architect of American banking.\nAre you ready to test your skills in the stock market?",
             [
                 { label: "Yes", action: () => dialogFunctions.explainStocks(), keepOpen: true },
-              { label: "No", action: () => {} }
+              { label: "Thank you for the introduction", action: () => {
+                // Give NPC cookie for completing the dialogue
+                if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.giveNpcCookie(sprite_data_stocks.id, "dialogue_completed");
+                }
+              } }
             ]
           );
           },
@@ -458,7 +468,12 @@ class GameLevelAirport {
             [
                 { label: "Tell me about Bitcoin", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true },
               { label: "Go to Crypto Hub", action: () => openInModal(`${pagesURI}/crypto/portfolio`) },
-              { label: "Goodbye", action: () => {} }
+              { label: "Thank you, Satoshi", action: () => {
+                // Give NPC cookie for completing the dialogue
+                if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.giveNpcCookie(sprite_data_crypto.id, "dialogue_completed");
+                }
+              } }
             ]
           );
           },
@@ -588,11 +603,33 @@ class GameLevelAirport {
       orientation: { rows: 1, columns: 1 },
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
+      reaction: function() {
+        return {
+          intro: function() {
+            showDialogBox(
+              "Market Computer",
+              "*Computer Fan Whirs* Let me show you the latest market news!\nWould you like to view the latest market updates or financial news?",
+              [
+                { label: "Show Market Updates", action: () => alert("Market data loaded! (Feature coming soon)") },
+                { label: "Thank you, Computer", action: () => {
+                  // Give NPC cookie for completing the interaction
+                  if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                    gameEnv.game.giveNpcCookie(sprite_data_computer.id, "computer_interaction");
+                  }
+                } }
+              ]
+            );
+          }
+        };
+      },
       interact: async function () {
         const game = gameEnv.game;
         const npcProgressSystem = new NpcProgressSystem();
         const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_computer.id);
-        if (allowed && typeof sprite_data_computer.reaction === 'function') await sprite_data_computer.reaction();
+        if (allowed) {
+          const dialogFunctions = sprite_data_computer.reaction();
+          dialogFunctions.intro();
+        }
       }
     };
     const sprite_src_bank = path + "/images/gamify/janetYellen.png";
@@ -696,7 +733,12 @@ class GameLevelAirport {
                 { label: "Review Analytics", action: () => dialogFunctions.analyticsIntro(), keepOpen: true },
                 { label: "Financial Tip", action: () => dialogFunctions.financialTip(), keepOpen: true },
                 { label: "Overall Leaderboard", action: () => openLeaderboardModal("https://open-coding-society.github.io/pages/leaderboard/overall-leaderboard") },
-                { label: "Goodbye", action: () => {} }
+                { label: "Thank you, Ms. Yellen", action: () => {
+                  // Give NPC cookie for completing the dialogue
+                  if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                    gameEnv.game.giveNpcCookie(sprite_data_bank.id, "dialogue_completed");
+                  }
+                } }
             ]
           );
           },

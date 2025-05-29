@@ -125,7 +125,6 @@ class StatsManager {
     }
 
     initStatsUI() {
-        const TOTAL_NPCS = 10;
         const statsWrapper = document.createElement('div');
         statsWrapper.id = 'stats-wrapper';
         Object.assign(statsWrapper.style, {
@@ -352,13 +351,18 @@ class StatsManager {
         `;
         document.head.appendChild(style);
 
-        // Get NPCs talked to count from cookies
-        let npcsTalkedTo = 0;
-        const cookies = document.cookie.split(';');
-        const npcsCookie = cookies.find(cookie => cookie.trim().startsWith('npcsTalkedTo='));
-        if (npcsCookie) {
-            npcsTalkedTo = parseInt(npcsCookie.split('=')[1]) || 0;
-        }
+        // Get actual NPC cookies earned for dynamic progress
+        const npcCookies = this.getAllNpcCookies();
+        const npcCookiesCount = Object.keys(npcCookies).length;
+        const dynamicTotal = Math.max(npcCookiesCount, 1); // At least 1 to avoid division by zero
+
+        // List of available NPCs that can give cookies
+        const availableNpcs = [
+            'Stock-NPC', 'Crypto-NPC', 'Casino-NPC', 'Bank-NPC',
+            'Fidelity', 'Schwab', 'Market Computer'
+        ];
+        const totalAvailable = availableNpcs.length;
+        const progressPercentage = totalAvailable > 0 ? (npcCookiesCount / totalAvailable) * 100 : 0;
 
         // Pixel-art icons (using retro-style emojis)
         const coinIcon = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/1fa99.png';
@@ -428,11 +432,11 @@ class StatsManager {
             </div>
             <div class="pixel-stat-box">
                 <img class="pixel-icon" src="${npcIcon}" alt="NPC" style="width:22px;height:22px;vertical-align:middle;" />
-                <span style="color: #ffb300;">NPCs Talked To:</span> <span id="npcsTalkedTo" style="margin-left: 6px;">${npcsTalkedTo}</span>
+                <span style="color: #ffb300;">NPC Cookies:</span> <span id="npcsTalkedTo" style="margin-left: 6px;">${npcCookiesCount}</span>
             </div>
             <div id="npcs-progress-bar-container">
-                <div id="npcs-progress-bar" style="width: ${(Math.min(npcsTalkedTo, TOTAL_NPCS) / TOTAL_NPCS) * 100}%;"></div>
-                <span id="npcs-progress-label">${npcsTalkedTo} / ${TOTAL_NPCS}</span>
+                <div id="npcs-progress-bar" style="width: ${progressPercentage}%;"></div>
+                <span id="npcs-progress-label">${npcCookiesCount} / ${totalAvailable}</span>
             </div>
         `;
 
@@ -520,15 +524,29 @@ class StatsManager {
     updateNpcsTalkedToUI(count) {
         const npcsSpan = document.getElementById('npcsTalkedTo');
         if (npcsSpan) {
-            npcsSpan.textContent = count;
+            // Get actual NPC cookies count for dynamic display
+            const npcCookies = this.getAllNpcCookies();
+            const npcCookiesCount = Object.keys(npcCookies).length;
+            npcsSpan.textContent = npcCookiesCount;
         }
         // Update progress bar
         const bar = document.getElementById('npcs-progress-bar');
         const label = document.getElementById('npcs-progress-label');
         if (bar && label) {
-            const TOTAL_NPCS = 10;
-            bar.style.width = `${(Math.min(count, TOTAL_NPCS) / TOTAL_NPCS) * 100}%`;
-            label.textContent = `${count} / ${TOTAL_NPCS}`;
+            const npcCookies = this.getAllNpcCookies();
+            const npcCookiesCount = Object.keys(npcCookies).length;
+            
+            // List of available NPCs that can give cookies
+            const availableNpcs = [
+                'Stock-NPC', 'Crypto-NPC', 'Casino-NPC', 'Bank-NPC',
+                'Fidelity', 'Schwab', 'Market Computer'
+            ];
+            const totalAvailable = availableNpcs.length;
+            
+            // Calculate percentage based on available NPCs
+            const percentage = totalAvailable > 0 ? (npcCookiesCount / totalAvailable) * 100 : 0;
+            bar.style.width = `${Math.min(percentage, 100)}%`;
+            label.textContent = `${npcCookiesCount} / ${totalAvailable}`;
         }
     }
 
@@ -544,6 +562,127 @@ class StatsManager {
         // Update cookie (expires in 30 days)
         document.cookie = `npcsTalkedTo=${npcsTalkedTo}; path=/; max-age=${60*60*24*30}`;
         this.updateNpcsTalkedToUI(npcsTalkedTo);
+    }
+
+    /**
+     * Give a specific cookie for an NPC interaction
+     * @param {string} npcId - The ID of the NPC
+     * @param {string} reward - The reward/cookie value (optional)
+     */
+    giveNpcCookie(npcId, reward = "completed") {
+        const cookieName = `npc_${npcId}`;
+        const cookieValue = reward;
+        const expiryDays = 30;
+        
+        // Check if this is the first time getting a cookie from this NPC
+        const existingCookie = this.getNpcCookie(npcId);
+        const isFirstTime = !existingCookie;
+        
+        // Set cookie (expires in 30 days)
+        document.cookie = `${cookieName}=${cookieValue}; path=/; max-age=${60*60*24*expiryDays}`;
+        
+        // Only increment the general counter if this is the first interaction
+        if (isFirstTime) {
+            this.incrementNpcsTalkedTo();
+        }
+        
+        // Show a notification that they received a cookie
+        this.showNpcCookieNotification(npcId, reward);
+        
+        // Update the UI to reflect the new cookie count
+        this.updateNpcsTalkedToUI(0); // Parameter doesn't matter anymore since we get count from cookies
+        
+        console.log(`NPC Cookie awarded: ${cookieName}=${cookieValue}`);
+    }
+
+    /**
+     * Check if user has a specific NPC cookie
+     * @param {string} npcId - The ID of the NPC
+     * @returns {string|null} - The cookie value if exists, null otherwise
+     */
+    getNpcCookie(npcId) {
+        const cookies = document.cookie.split(';');
+        const cookieName = `npc_${npcId}`;
+        const npcCookie = cookies.find(cookie => cookie.trim().startsWith(`${cookieName}=`));
+        if (npcCookie) {
+            return npcCookie.split('=')[1];
+        }
+        return null;
+    }
+
+    /**
+     * Get all NPC cookies
+     * @returns {Object} - Object with npcId as key and cookie value as value
+     */
+    getAllNpcCookies() {
+        const cookies = document.cookie.split(';');
+        const npcCookies = {};
+        
+        cookies.forEach(cookie => {
+            const trimmedCookie = cookie.trim();
+            if (trimmedCookie.startsWith('npc_')) {
+                const [name, value] = trimmedCookie.split('=');
+                const npcId = name.replace('npc_', '');
+                npcCookies[npcId] = value;
+            }
+        });
+        
+        return npcCookies;
+    }
+
+    /**
+     * Show a notification when user receives an NPC cookie
+     * @param {string} npcId - The ID of the NPC
+     * @param {string} reward - The reward received
+     */
+    showNpcCookieNotification(npcId, reward) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            max-width: 300px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        `;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">🍪</span>
+                <div>
+                    <strong>Cookie Earned!</strong><br>
+                    <span style="font-size: 12px; opacity: 0.9;">
+                        ${npcId.replace(/-/g, ' ')}: ${reward}
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Animate out and remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
     }
 }
 
@@ -725,6 +864,34 @@ class Game {
         return this.quizManager.attemptQuizForNpc(npcCategory, callback);
     }
 
+    // === NPC Cookie Methods ===
+    
+    /**
+     * Give a cookie to the user for completing an NPC interaction
+     * @param {string} npcId - The ID of the NPC
+     * @param {string} reward - The reward/cookie value (optional)
+     */
+    giveNpcCookie(npcId, reward = "completed") {
+        return this.statsManager.giveNpcCookie(npcId, reward);
+    }
+
+    /**
+     * Check if user has a specific NPC cookie
+     * @param {string} npcId - The ID of the NPC
+     * @returns {string|null} - The cookie value if exists, null otherwise
+     */
+    getNpcCookie(npcId) {
+        return this.statsManager.getNpcCookie(npcId);
+    }
+
+    /**
+     * Get all NPC cookies
+     * @returns {Object} - Object with npcId as key and cookie value as value
+     */
+    getAllNpcCookies() {
+        return this.statsManager.getAllNpcCookies();
+    }
+
     showGameInstructions() {
         // Create modal container
         const modal = document.createElement('div');
@@ -896,6 +1063,18 @@ class Game {
                 <span class="instruction-label">Help:</span>
                 <span>Press H to show this menu</span>
             </div>
+            
+            <!-- NPC Cookies Section -->
+            <div class="instruction-box" style="flex-direction: column; align-items: flex-start;">
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <span class="instruction-icon">🍪</span>
+                    <span class="instruction-label">NPC Cookies Earned:</span>
+                </div>
+                <div id="npcCookiesDisplay" style="font-size: 0.6em; line-height: 1.4; color: #fff;">
+                    ${this.getNpcCookiesDisplayHTML()}
+                </div>
+            </div>
+            
             <div class="button-container">
                 <button class="game-button" id="closeInstructions">GOT IT!</button>
             </div>
@@ -932,6 +1111,18 @@ class Game {
                 hoverSound.play();
             });
         });
+    }
+
+    getNpcCookiesDisplayHTML() {
+        const cookies = this.getAllNpcCookies();
+        if (Object.keys(cookies).length === 0) {
+            return '<span style="color: #999;">No NPC cookies yet! Talk to NPCs to earn cookies.</span>';
+        }
+        
+        return Object.entries(cookies).map(([npcId, reward]) => {
+            const emoji = reward === 'quiz_completed' ? '🧠' : reward === 'dialogue_completed' ? '💬' : '✅';
+            return `<span style="color: #4CAF50;">${emoji} ${npcId.replace(/-/g, ' ')}: ${reward}</span>`;
+        }).join('<br>');
     }
 }
 

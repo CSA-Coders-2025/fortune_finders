@@ -616,6 +616,16 @@ class Quiz {
                 this.answeredQuestionsByNpc[npcCategory] = new Set();
             }
             this.answeredQuestionsByNpc[npcCategory].add(this.currentNpc.questionId);
+            
+            // Award NPC cookie for correct answer
+            try {
+                if (Game && Game.giveNpcCookie) {
+                    Game.giveNpcCookie(npcCategory, "quiz_completed");
+                    console.log(`NPC Cookie awarded for ${npcCategory}`);
+                }
+            } catch (error) {
+                console.error("Error awarding NPC cookie:", error);
+            }
         }
         
     
