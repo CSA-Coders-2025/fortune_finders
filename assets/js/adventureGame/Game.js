@@ -1243,407 +1243,482 @@ class StatsManager {
     }
 }
 
-// Minecraft-Style Ambient Sound Manager Class
-class AmbientSoundManager {
+// Minecraft-Style Music Manager Class
+class MinecraftMusicManager {
     constructor() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        this.isLooping = false;
-        this.ambientGain = null;
-        this.currentEnvironment = 'default';
-        this.lastAmbientTime = 0;
-        this.ambientInterval = 15000; // 15 seconds minimum between ambient sounds
+        this.isPlaying = false;
+        this.currentTheme = 'overworld';
+        this.musicGain = null;
+        this.currentTrack = null;
         
-        // Minecraft-style ambient sound sets
-        this.ambientSounds = {
-            'default': {
-                sounds: ['wind', 'distant_echo', 'subtle_drone'],
-                baseFreq: 60,
-                volume: 0.02
+        // Musical scales and chord progressions for different themes
+        this.musicThemes = {
+            'overworld': {
+                key: 'C',
+                scale: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C Major
+                chords: [
+                    [261.63, 329.63, 392.00], // C Major
+                    [293.66, 369.99, 440.00], // D Minor
+                    [329.63, 392.00, 493.88], // E Minor  
+                    [349.23, 440.00, 523.25], // F Major
+                    [392.00, 493.88, 587.33], // G Major
+                    [220.00, 261.63, 329.63], // A Minor
+                ],
+                tempo: 80,
+                volume: 0.15,
+                mood: 'peaceful'
             },
-            'office': {
-                sounds: ['air_conditioning', 'distant_typing', 'elevator_hum', 'fluorescent_buzz'],
-                baseFreq: 120,
-                volume: 0.015
+            'creative': {
+                key: 'G',
+                scale: [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99], // G Major
+                chords: [
+                    [392.00, 493.88, 587.33], // G Major
+                    [220.00, 261.63, 329.63], // A Minor
+                    [246.94, 311.13, 369.99], // B Minor
+                    [261.63, 329.63, 392.00], // C Major
+                    [293.66, 369.99, 440.00], // D Major
+                    [329.63, 415.30, 493.88], // E Minor
+                ],
+                tempo: 95,
+                volume: 0.18,
+                mood: 'uplifting'
             },
-            'casino': {
-                sounds: ['distant_slots', 'muffled_chatter', 'air_circulation', 'carpet_ambience'],
-                baseFreq: 80,
-                volume: 0.018
+            'calm': {
+                key: 'Am',
+                scale: [220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00], // A Minor
+                chords: [
+                    [220.00, 261.63, 329.63], // A Minor
+                    [293.66, 349.23, 440.00], // D Minor
+                    [329.63, 392.00, 493.88], // E Minor
+                    [349.23, 440.00, 523.25], // F Major
+                    [261.63, 329.63, 392.00], // C Major
+                    [392.00, 493.88, 587.33], // G Major
+                ],
+                tempo: 65,
+                volume: 0.12,
+                mood: 'meditative'
             },
-            'bank': {
-                sounds: ['vault_echo', 'marble_ambience', 'security_hum', 'distant_footsteps'],
-                baseFreq: 100,
-                volume: 0.02
+            'nether': {
+                key: 'Dm',
+                scale: [293.66, 311.13, 349.23, 369.99, 415.30, 440.00, 493.88], // D Minor
+                chords: [
+                    [293.66, 349.23, 440.00], // D Minor
+                    [369.99, 440.00, 554.37], // F# Diminished
+                    [415.30, 493.88, 622.25], // G# Minor
+                    [246.94, 311.13, 369.99], // B Minor
+                    [329.63, 415.30, 493.88], // E Minor
+                ],
+                tempo: 70,
+                volume: 0.14,
+                mood: 'mysterious'
             },
-            'airport': {
-                sounds: ['terminal_ambience', 'distant_announcements', 'air_circulation', 'crowd_murmur'],
-                baseFreq: 90,
-                volume: 0.025
+            'cave': {
+                key: 'Fm',
+                scale: [174.61, 196.00, 207.65, 233.08, 261.63, 277.18, 311.13], // F Minor
+                chords: [
+                    [174.61, 207.65, 261.63], // F Minor
+                    [196.00, 233.08, 293.66], // G Minor
+                    [207.65, 261.63, 311.13], // Ab Major
+                    [233.08, 277.18, 349.23], // Bb Minor
+                    [138.59, 174.61, 207.65], // Db Major
+                ],
+                tempo: 55,
+                volume: 0.10,
+                mood: 'eerie'
             },
-            'desert': {
-                sounds: ['wind_sand', 'distant_howl', 'desert_drone', 'heat_shimmer'],
-                baseFreq: 50,
-                volume: 0.02
-            },
-            'underground': {
-                sounds: ['cave_echo', 'water_drip', 'stone_settle', 'deep_rumble'],
-                baseFreq: 40,
-                volume: 0.03
+            'dry': {
+                key: 'E',
+                scale: [329.63, 369.99, 415.30, 440.00, 493.88, 554.37, 622.25], // E Major
+                chords: [
+                    [329.63, 415.30, 493.88], // E Major
+                    [369.99, 466.16, 554.37], // F# Minor
+                    [415.30, 523.25, 622.25], // G# Minor
+                    [440.00, 554.37, 659.25], // A Major
+                    [493.88, 622.25, 739.99], // B Major
+                ],
+                tempo: 75,
+                volume: 0.13,
+                mood: 'warm'
             }
         };
     }
     
-    startAmbientLoop() {
-        if (this.isLooping || !window.gameAudioEnabled) return;
-        
-        this.isLooping = true;
-        this.scheduleNextAmbient();
-    }
-    
-    stopAmbientLoop() {
-        this.isLooping = false;
-        if (this.ambientGain) {
-            this.ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1);
-        }
-    }
-    
-    setEnvironment(environment) {
-        this.currentEnvironment = environment || 'default';
-        console.log(`Ambient environment set to: ${this.currentEnvironment}`);
-    }
-    
-    scheduleNextAmbient() {
-        if (!this.isLooping || !window.gameAudioEnabled) return;
-        
-        // Random interval between 8-25 seconds (like Minecraft)
-        const nextInterval = 8000 + Math.random() * 17000;
-        
-        setTimeout(() => {
-            if (this.isLooping) {
-                this.playRandomAmbientSound();
-                this.scheduleNextAmbient();
-            }
-        }, nextInterval);
-    }
-    
-    playRandomAmbientSound() {
-        const envData = this.ambientSounds[this.currentEnvironment] || this.ambientSounds['default'];
-        const soundType = envData.sounds[Math.floor(Math.random() * envData.sounds.length)];
-        
-        this.playAmbientSound(soundType, envData);
-    }
-    
-    playAmbientSound(soundType, envData) {
+    startMusicLoop() {
         if (!window.gameAudioEnabled) return;
         
-        try {
-            switch (soundType) {
-                case 'wind':
-                    this.createWindSound(envData);
-                    break;
-                case 'cave_echo':
-                    this.createCaveEcho();
-                    break;
-                case 'water_drip':
-                    this.createWaterDrip();
-                    break;
-                case 'distant_echo':
-                    this.createDistantEcho();
-                    break;
-                case 'air_conditioning':
-                    this.createAirConditioning();
-                    break;
-                case 'distant_typing':
-                    this.createDistantTyping();
-                    break;
-                case 'fluorescent_buzz':
-                    this.createFluorescentBuzz();
-                    break;
-                case 'distant_slots':
-                    this.createDistantSlots();
-                    break;
-                case 'vault_echo':
-                    this.createVaultEcho();
-                    break;
-                case 'terminal_ambience':
-                    this.createTerminalAmbience();
-                    break;
-                case 'wind_sand':
-                    this.createSandWind();
-                    break;
-                case 'deep_rumble':
-                    this.createDeepRumble();
-                    break;
-                default:
-                    this.createGenericAmbient(envData);
-            }
-        } catch (e) {
-            console.log("Ambient sound error:", e);
+        // Schedule first track after 30-90 seconds (like Minecraft)
+        const initialDelay = 30000 + Math.random() * 60000;
+        setTimeout(() => {
+            this.scheduleNextTrack();
+        }, initialDelay);
+    }
+    
+    scheduleNextTrack() {
+        if (!window.gameAudioEnabled) return;
+        
+        // Play a track
+        this.playProceduralTrack();
+        
+        // Schedule next track in 3-8 minutes (like Minecraft)
+        const nextDelay = 180000 + Math.random() * 300000; // 3-8 minutes
+        setTimeout(() => {
+            this.scheduleNextTrack();
+        }, nextDelay);
+    }
+    
+    setMusicTheme(theme) {
+        this.currentTheme = theme || 'overworld';
+        console.log(`Music theme set to: ${this.currentTheme}`);
+    }
+    
+    playProceduralTrack() {
+        if (!window.gameAudioEnabled || this.isPlaying) return;
+        
+        this.isPlaying = true;
+        const theme = this.musicThemes[this.currentTheme] || this.musicThemes['overworld'];
+        
+        // Create track based on mood
+        switch (theme.mood) {
+            case 'peaceful':
+                this.playPeacefulMelody(theme);
+                break;
+            case 'uplifting':
+                this.playUpliftingMelody(theme);
+                break;
+            case 'meditative':
+                this.playMeditativeMelody(theme);
+                break;
+            case 'mysterious':
+                this.playMysteriousMelody(theme);
+                break;
+            case 'eerie':
+                this.playEerieMelody(theme);
+                break;
+            case 'warm':
+                this.playWarmMelody(theme);
+                break;
+            default:
+                this.playPeacefulMelody(theme);
         }
     }
     
-    // Minecraft-style wind sound
-    createWindSound(envData) {
-        const duration = 3 + Math.random() * 4; // 3-7 seconds
+    playPeacefulMelody(theme) {
+        const duration = 45 + Math.random() * 30; // 45-75 seconds
+        const beatDuration = 60 / theme.tempo; // Beat duration in seconds
         
-        // Create wind with filtered noise
-        const bufferSize = this.audioContext.sampleRate * duration;
-        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-        const output = buffer.getChannelData(0);
+        // Create main gain node for the track
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 4);
         
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = (Math.random() * 2 - 1) * (0.5 + 0.5 * Math.sin(i / bufferSize * Math.PI));
-        }
+        // Play chord progression (harmony)
+        this.playChordProgression(theme, duration, beatDuration);
         
-        const source = this.audioContext.createBufferSource();
+        // Play melody over chords (starts after 8 seconds)
+        setTimeout(() => {
+            this.playSimpleMelody(theme, duration - 8, beatDuration);
+        }, 8000);
+        
+        // Fade out and stop
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 3);
+            }
+            setTimeout(() => {
+                this.isPlaying = false;
+            }, 3000);
+        }, (duration - 3) * 1000);
+    }
+    
+    playUpliftingMelody(theme) {
+        const duration = 40 + Math.random() * 25; // 40-65 seconds
+        const beatDuration = 60 / theme.tempo;
+        
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 3);
+        
+        // More energetic chord progression
+        this.playChordProgression(theme, duration, beatDuration, 'energetic');
+        
+        // Brighter melody
+        setTimeout(() => {
+            this.playArpeggioMelody(theme, duration - 6, beatDuration);
+        }, 6000);
+        
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 2);
+            }
+            setTimeout(() => this.isPlaying = false, 2000);
+        }, (duration - 2) * 1000);
+    }
+    
+    playMeditativeMelody(theme) {
+        const duration = 60 + Math.random() * 40; // 60-100 seconds (longer)
+        const beatDuration = 60 / theme.tempo;
+        
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 6);
+        
+        // Slow, sustained chords
+        this.playPadChords(theme, duration, beatDuration * 2);
+        
+        // Very simple, sparse melody
+        setTimeout(() => {
+            this.playSparseMelody(theme, duration - 12, beatDuration * 1.5);
+        }, 12000);
+        
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 5);
+            }
+            setTimeout(() => this.isPlaying = false, 5000);
+        }, (duration - 5) * 1000);
+    }
+    
+    playMysteriousMelody(theme) {
+        const duration = 50 + Math.random() * 30;
+        const beatDuration = 60 / theme.tempo;
+        
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 4);
+        
+        // Dissonant, mysterious chords
+        this.playChordProgression(theme, duration, beatDuration, 'mysterious');
+        
+        // Haunting melody with reverb
+        setTimeout(() => {
+            this.playHauntingMelody(theme, duration - 8, beatDuration);
+        }, 8000);
+        
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 4);
+            }
+            setTimeout(() => this.isPlaying = false, 4000);
+        }, (duration - 4) * 1000);
+    }
+    
+    playEerieMelody(theme) {
+        const duration = 55 + Math.random() * 35;
+        const beatDuration = 60 / theme.tempo;
+        
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 5);
+        
+        // Dark, low chords
+        this.playDarkChords(theme, duration, beatDuration * 1.5);
+        
+        // Eerie high melody
+        setTimeout(() => {
+            this.playEerieHighMelody(theme, duration - 10, beatDuration);
+        }, 10000);
+        
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 4);
+            }
+            setTimeout(() => this.isPlaying = false, 4000);
+        }, (duration - 4) * 1000);
+    }
+    
+    playWarmMelody(theme) {
+        const duration = 45 + Math.random() * 25;
+        const beatDuration = 60 / theme.tempo;
+        
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 3);
+        
+        // Warm, major chords
+        this.playChordProgression(theme, duration, beatDuration, 'warm');
+        
+        // Flowing melody
+        setTimeout(() => {
+            this.playFlowingMelody(theme, duration - 6, beatDuration);
+        }, 6000);
+        
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 3);
+            }
+            setTimeout(() => this.isPlaying = false, 3000);
+        }, (duration - 3) * 1000);
+    }
+    
+    playChordProgression(theme, duration, beatDuration, style = 'normal') {
+        const chords = theme.chords;
+        let chordIndex = 0;
+        const chordDuration = beatDuration * 4; // Each chord lasts 4 beats
+        
+        const playChord = () => {
+            if (!this.musicGain) return;
+            
+            const chord = chords[chordIndex % chords.length];
+            
+            chord.forEach((freq, noteIndex) => {
+                setTimeout(() => {
+                    this.createChordNote(freq, chordDuration, theme.volume * 0.3, style);
+                }, noteIndex * 50); // Slight delay for each note in chord
+            });
+            
+            chordIndex++;
+            
+            if (chordIndex * chordDuration < duration) {
+                setTimeout(playChord, chordDuration * 1000);
+            }
+        };
+        
+        playChord();
+    }
+    
+    createChordNote(frequency, duration, volume, style) {
+        if (!this.musicGain) return;
+        
+        const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
         const filter = this.audioContext.createBiquadFilter();
         
-        source.buffer = buffer;
-        source.connect(filter);
+        osc.connect(filter);
         filter.connect(gain);
-        gain.connect(this.audioContext.destination);
+        gain.connect(this.musicGain);
         
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(200 + Math.random() * 100, this.audioContext.currentTime);
-        filter.Q.setValueAtTime(0.5, this.audioContext.currentTime);
+        // Different waveforms for different styles
+        switch (style) {
+            case 'warm':
+                osc.type = 'sawtooth';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                break;
+            case 'mysterious':
+                osc.type = 'triangle';
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                break;
+            case 'energetic':
+                osc.type = 'square';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+                break;
+            default:
+                osc.type = 'sine';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, this.audioContext.currentTime);
+        }
+        
+        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
         
         gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(envData.volume, this.audioContext.currentTime + 0.5);
-        gain.gain.linearRampToValueAtTime(envData.volume * 0.7, this.audioContext.currentTime + duration - 1);
+        gain.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.1);
+        gain.gain.linearRampToValueAtTime(volume * 0.7, this.audioContext.currentTime + duration - 0.5);
         gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
         
-        source.start(this.audioContext.currentTime);
-    }
-    
-    // Classic Minecraft cave echo
-    createCaveEcho() {
-        const frequencies = [180, 220, 260]; // Eerie chord
-        const duration = 2 + Math.random() * 3;
-        
-        frequencies.forEach((freq, index) => {
-            setTimeout(() => {
-                const osc = this.audioContext.createOscillator();
-                const gain = this.audioContext.createGain();
-                const filter = this.audioContext.createBiquadFilter();
-                const delay = this.audioContext.createDelay(2);
-                const delayGain = this.audioContext.createGain();
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.audioContext.destination);
-                
-                // Echo effect
-                gain.connect(delay);
-                delay.connect(delayGain);
-                delayGain.connect(gain);
-                
-                osc.frequency.setValueAtTime(freq + Math.random() * 20, this.audioContext.currentTime);
-                osc.type = 'sine';
-                
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(400, this.audioContext.currentTime);
-                
-                delay.delayTime.setValueAtTime(0.3 + Math.random() * 0.4, this.audioContext.currentTime);
-                delayGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-                
-                gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-                gain.gain.linearRampToValueAtTime(0.025, this.audioContext.currentTime + 0.3);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
-                
-                osc.start(this.audioContext.currentTime);
-                osc.stop(this.audioContext.currentTime + duration);
-            }, index * 200);
-        });
-    }
-    
-    // Water drip sound (classic Minecraft cave sound)
-    createWaterDrip() {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.1);
-        osc.type = 'sine';
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1200, this.audioContext.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.04, this.audioContext.currentTime + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
-        
         osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 0.8);
+        osc.stop(this.audioContext.currentTime + duration);
     }
     
-    // Distant echo effect
-    createDistantEcho() {
+    playSimpleMelody(theme, duration, beatDuration) {
+        const scale = theme.scale;
+        let noteIndex = 0;
+        const noteDuration = beatDuration / 2; // Eighth notes
+        
+        const playNote = () => {
+            if (!this.musicGain) return;
+            
+            // Simple melody pattern - mostly steps with occasional jumps
+            const direction = Math.random() > 0.7 ? (Math.random() > 0.5 ? 2 : -2) : (Math.random() > 0.5 ? 1 : -1);
+            noteIndex = Math.max(0, Math.min(scale.length - 1, noteIndex + direction));
+            
+            const frequency = scale[noteIndex] * (Math.random() > 0.8 ? 2 : 1); // Occasional octave jump
+            
+            this.createMelodyNote(frequency, noteDuration, theme.volume * 0.4);
+            
+            // Sometimes skip a beat for musical breathing
+            const nextDelay = Math.random() > 0.8 ? noteDuration * 3 : noteDuration * 2;
+            
+            if (nextDelay / 1000 < duration) {
+                setTimeout(playNote, nextDelay * 1000);
+                duration -= nextDelay;
+            }
+        };
+        
+        playNote();
+    }
+    
+    createMelodyNote(frequency, duration, volume) {
+        if (!this.musicGain) return;
+        
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
         const filter = this.audioContext.createBiquadFilter();
-        const delay = this.audioContext.createDelay(1);
-        const delayGain = this.audioContext.createGain();
         
         osc.connect(filter);
         filter.connect(gain);
-        gain.connect(this.audioContext.destination);
-        gain.connect(delay);
-        delay.connect(delayGain);
-        delayGain.connect(gain);
+        gain.connect(this.musicGain);
         
-        osc.frequency.setValueAtTime(150 + Math.random() * 100, this.audioContext.currentTime);
         osc.type = 'triangle';
+        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
         
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
-        
-        delay.delayTime.setValueAtTime(0.5, this.audioContext.currentTime);
-        delayGain.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+        filter.frequency.setValueAtTime(2000, this.audioContext.currentTime);
         
         gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.02, this.audioContext.currentTime + 0.2);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 3);
+        gain.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
         
         osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 3);
+        osc.stop(this.audioContext.currentTime + duration);
     }
     
-    // Office air conditioning hum
-    createAirConditioning() {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(120 + Math.random() * 20, this.audioContext.currentTime);
-        osc.type = 'sawtooth';
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(250, this.audioContext.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, this.audioContext.currentTime + 1);
-        gain.gain.linearRampToValueAtTime(0.008, this.audioContext.currentTime + 4);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 6);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 6);
+    // Additional melody methods for different styles (simplified versions)
+    playArpeggioMelody(theme, duration, beatDuration) {
+        // Implementation for arpeggio-style melody
+        this.playSimpleMelody(theme, duration, beatDuration / 2);
     }
     
-    // Distant typing sounds
-    createDistantTyping() {
-        const typeCount = 3 + Math.random() * 7; // 3-10 keystrokes
-        
-        for (let i = 0; i < typeCount; i++) {
-            setTimeout(() => {
-                const osc = this.audioContext.createOscillator();
-                const gain = this.audioContext.createGain();
-                const filter = this.audioContext.createBiquadFilter();
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.audioContext.destination);
-                
-                osc.frequency.setValueAtTime(800 + Math.random() * 400, this.audioContext.currentTime);
-                osc.type = 'square';
-                
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(600, this.audioContext.currentTime);
-                
-                gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-                gain.gain.linearRampToValueAtTime(0.005, this.audioContext.currentTime + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
-                
-                osc.start(this.audioContext.currentTime);
-                osc.stop(this.audioContext.currentTime + 0.1);
-            }, i * (100 + Math.random() * 200));
-        }
+    playSparseMelody(theme, duration, beatDuration) {
+        // Very slow, sparse melody
+        this.playSimpleMelody(theme, duration, beatDuration * 3);
     }
     
-    // Casino slot machine sounds in distance
-    createDistantSlots() {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(400, this.audioContext.currentTime);
-        osc.frequency.linearRampToValueAtTime(350, this.audioContext.currentTime + 0.5);
-        osc.type = 'square';
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(500, this.audioContext.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.008, this.audioContext.currentTime + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 1.5);
+    playHauntingMelody(theme, duration, beatDuration) {
+        // Mysterious melody with longer notes
+        this.playSimpleMelody(theme, duration, beatDuration * 1.5);
     }
     
-    // Deep underground rumble
-    createDeepRumble() {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(30 + Math.random() * 20, this.audioContext.currentTime);
-        osc.type = 'sawtooth';
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(80, this.audioContext.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.04, this.audioContext.currentTime + 1);
-        gain.gain.linearRampToValueAtTime(0.03, this.audioContext.currentTime + 4);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 8);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 8);
+    playPadChords(theme, duration, beatDuration) {
+        // Sustained pad-like chords
+        this.playChordProgression(theme, duration, beatDuration * 2, 'warm');
     }
     
-    // Generic ambient for other environments
-    createGenericAmbient(envData) {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(envData.baseFreq + Math.random() * 40, this.audioContext.currentTime);
-        osc.type = 'sine';
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(envData.volume, this.audioContext.currentTime + 1);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 5);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 5);
+    playDarkChords(theme, duration, beatDuration) {
+        // Dark, low chords
+        this.playChordProgression(theme, duration, beatDuration, 'mysterious');
     }
     
-    // Keep existing UI interaction sounds
+    playEerieHighMelody(theme, duration, beatDuration) {
+        // High, eerie melody
+        const scale = theme.scale.map(freq => freq * 2); // Octave higher
+        this.playSimpleMelody({...theme, scale}, duration, beatDuration * 2);
+    }
+    
+    playFlowingMelody(theme, duration, beatDuration) {
+        // Smooth, flowing melody
+        this.playSimpleMelody(theme, duration, beatDuration);
+    }
+    
+    // Keep UI interaction sounds
     playUIHoverSound() {
         if (!window.gameAudioEnabled) return;
         
