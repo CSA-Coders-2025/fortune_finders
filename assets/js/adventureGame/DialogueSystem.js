@@ -405,7 +405,7 @@ class DialogueSystem {
         
         // Play completion sound (softer bell sound) with delay
         setTimeout(() => {
-          if (this.typewriterSound) {
+          if (this.typewriterSound && window.gameAudioEnabled !== false) {
             this.playCompletionSound();
           }
         }, 250);
