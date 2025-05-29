@@ -300,7 +300,7 @@ class DialogueSystem {
     return this.dialogueBox;
   }
 
-  // Typewriter effect with sound
+  // Typewriter effect with realistic mechanical sounds
   startTypewriterEffect(message) {
     this.isTyping = true;
     this.dialogueText.textContent = ""; // Clear existing text
@@ -323,38 +323,87 @@ class DialogueSystem {
     }
     
     let charIndex = 0;
+    let lineLength = 0; // Track characters per line for typewriter bell
+    const maxLineLength = 60; // Dialogue box is narrower
+    
     const typeChar = () => {
       if (charIndex < message.length && this.isTyping) {
         // Add the next character
         this.dialogueText.textContent = message.substring(0, charIndex + 1);
+        const char = message[charIndex];
         charIndex++;
+        lineLength++;
         
-        // Play typewriter sound for non-space characters and every other character
-        if (this.typewriterSound && message[charIndex - 1] !== ' ' && charIndex % 2 === 0) {
+        // Play appropriate sound based on character type
+        if (charIndex % 2 === 0) { // Reduce frequency to avoid overwhelming
           try {
-            this.typewriterSound.playKey();
+            if (char === ' ') {
+              // Different sound for spacebar
+              this.typewriterSound.playSpace();
+            } else if (char === '\n' || char === '\r') {
+              // Reset line length for new lines
+              lineLength = 0;
+              this.typewriterSound.playKey();
+            } else if ('.,!?;:'.includes(char)) {
+              // Regular key sound for punctuation
+              this.typewriterSound.playKey();
+              // Add a pause after punctuation
+              this.typewriterTimeout = setTimeout(typeChar, 120 + Math.random() * 80);
+              return;
+            } else {
+              // Regular key sound
+              this.typewriterSound.playKey();
+            }
+            
+            // Typewriter bell when approaching end of line
+            if (lineLength >= maxLineLength && char === ' ') {
+              this.typewriterSound.playBell();
+              lineLength = 0; // Reset after bell
+            }
+            
           } catch (e) {
             console.log("Typewriter sound error:", e);
           }
         }
         
+        // Vary typing speed based on character and add realistic delays
+        const baseSpeed = 40; // Realistic typing speed
+        let variance = Math.random() * 12; // 0-12ms variance
+        
+        // Different speeds for different characters
+        let charSpeed = baseSpeed;
+        if (char === ' ') {
+          charSpeed = baseSpeed - 8; // Spacebar is usually faster
+        } else if ('.,!?;:'.includes(char)) {
+          charSpeed = baseSpeed + 40; // Pause after punctuation
+        } else if (char.match(/[A-Z]/)) {
+          charSpeed = baseSpeed + 15; // Slight pause for capitals (shift key)
+        }
+        
+        // Occasional "thinking" pauses (like a real typist)
+        if (Math.random() < 0.04) { // 4% chance of pause
+          variance += 150 + Math.random() * 250; // 150-400ms thinking pause
+        }
+        
         // Schedule next character
-        this.typewriterTimeout = setTimeout(typeChar, 30 + Math.random() * 20); // 30-50ms per character
+        this.typewriterTimeout = setTimeout(typeChar, charSpeed + variance);
       } else {
         // Typing complete
         this.isTyping = false;
         this.dialogueText.style.borderRight = "none";
         this.dialogueText.style.animation = "none";
         
-        // Play completion sound (softer bell sound)
-        if (this.typewriterSound) {
-          this.playCompletionSound();
-        }
+        // Play completion sound (softer bell sound) with delay
+        setTimeout(() => {
+          if (this.typewriterSound) {
+            this.playCompletionSound();
+          }
+        }, 250);
       }
     };
     
-    // Start typing after a short delay
-    this.typewriterTimeout = setTimeout(typeChar, 300);
+    // Start typing after a delay (like inserting paper)
+    this.typewriterTimeout = setTimeout(typeChar, 400);
   }
 
   // Play a soft completion sound when typing finishes
