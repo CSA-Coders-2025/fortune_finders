@@ -60,8 +60,67 @@ export default class WaypointArrow {
     arrowImg.style.width = '48px';
     arrowImg.style.height = '48px';
     arrowImg.style.pointerEvents = 'none';
-    arrowImg.style.transition = 'top 0.3s, left 0.3s';
+    arrowImg.style.transition = 'top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), left 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+    arrowImg.style.filter = 'drop-shadow(0 0 10px #ff4444) drop-shadow(0 0 20px #ff0000)';
+    arrowImg.style.animation = 'arrowFloat 2s ease-in-out infinite, arrowGlow 1.5s ease-in-out infinite alternate';
+    
+    // Add enhanced CSS animations if not already present
+    if (!document.getElementById('waypoint-arrow-styles')) {
+      const style = document.createElement('style');
+      style.id = 'waypoint-arrow-styles';
+      style.textContent = `
+        @keyframes arrowFloat {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        
+        @keyframes arrowGlow {
+          0% { 
+            filter: drop-shadow(0 0 10px #ff4444) drop-shadow(0 0 20px #ff0000);
+          }
+          100% { 
+            filter: drop-shadow(0 0 15px #ff6666) drop-shadow(0 0 30px #ff2222) drop-shadow(0 0 40px #ff0000);
+          }
+        }
+        
+        @keyframes arrowAdvance {
+          0% { 
+            transform: translateY(0px) scale(1) rotate(0deg);
+            filter: drop-shadow(0 0 10px #ff4444) drop-shadow(0 0 20px #ff0000);
+          }
+          50% { 
+            transform: translateY(-15px) scale(1.3) rotate(5deg);
+            filter: drop-shadow(0 0 25px #00ff00) drop-shadow(0 0 40px #00aa00);
+          }
+          100% { 
+            transform: translateY(0px) scale(1) rotate(0deg);
+            filter: drop-shadow(0 0 10px #ff4444) drop-shadow(0 0 20px #ff0000);
+          }
+        }
+        
+        .arrow-trail {
+          position: absolute;
+          width: 6px;
+          height: 6px;
+          background: radial-gradient(circle, #ff4444, transparent);
+          border-radius: 50%;
+          pointer-events: none;
+          animation: trailFade 1s linear forwards;
+        }
+        
+        @keyframes trailFade {
+          0% { opacity: 0.8; transform: scale(1); }
+          100% { opacity: 0; transform: scale(0.3); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
     document.body.appendChild(arrowImg);
+    
+    // Start trail effect
+    this.startTrailEffect();
+    
     return arrowImg;
   }
 
@@ -176,13 +235,104 @@ export default class WaypointArrow {
     if (this.currentStep < this.waypointIds.length - 1) {
       this.currentStep++;
       this.setCookie('waypointStep', this.currentStep, 30);
-      this.moveArrowToCurrentWaypoint();
       
-      // Visual feedback - make arrow pulse briefly
-      this.arrowImg.style.transform = 'scale(1.2)';
+      // Enhanced advancement animation
+      this.arrowImg.style.animation = 'arrowAdvance 0.8s ease-out';
+      
+      // Create advancement particles
+      this.createAdvancementParticles();
+      
+      // Move to new position after brief delay
       setTimeout(() => {
-        this.arrowImg.style.transform = 'scale(1)';
-      }, 200);
+        this.moveArrowToCurrentWaypoint();
+        // Reset to normal animation
+        this.arrowImg.style.animation = 'arrowFloat 2s ease-in-out infinite, arrowGlow 1.5s ease-in-out infinite alternate';
+      }, 400);
+    }
+  }
+
+  startTrailEffect() {
+    // Create subtle trail particles periodically
+    this.trailInterval = setInterval(() => {
+      this.createTrailParticle();
+    }, 200);
+  }
+
+  createTrailParticle() {
+    const trail = document.createElement('div');
+    trail.className = 'arrow-trail';
+    
+    // Position at arrow location
+    const arrowRect = this.arrowImg.getBoundingClientRect();
+    trail.style.left = (arrowRect.left + arrowRect.width / 2) + 'px';
+    trail.style.top = (arrowRect.top + arrowRect.height / 2) + 'px';
+    trail.style.zIndex = this.arrowImg.style.zIndex - 1;
+    
+    document.body.appendChild(trail);
+    
+    // Remove after animation
+    setTimeout(() => {
+      if (trail.parentNode) {
+        trail.parentNode.removeChild(trail);
+      }
+    }, 1000);
+  }
+
+  createAdvancementParticles() {
+    // Create burst of celebration particles
+    const particleCount = 12;
+    const arrowRect = this.arrowImg.getBoundingClientRect();
+    const centerX = arrowRect.left + arrowRect.width / 2;
+    const centerY = arrowRect.top + arrowRect.height / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.style.cssText = `
+        position: fixed;
+        left: ${centerX}px;
+        top: ${centerY}px;
+        width: 6px;
+        height: 6px;
+        background: linear-gradient(45deg, #00ff00, #ffff00);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 2001;
+        box-shadow: 0 0 8px #00ff00;
+      `;
+      
+      document.body.appendChild(particle);
+      
+      // Animate particle outward
+      const angle = (Math.PI * 2 * i) / particleCount;
+      const distance = 60 + Math.random() * 40;
+      const deltaX = Math.cos(angle) * distance;
+      const deltaY = Math.sin(angle) * distance;
+      
+      particle.animate([
+        {
+          transform: 'translate(-50%, -50%) scale(0)',
+          opacity: 1
+        },
+        {
+          transform: 'translate(-50%, -50%) scale(1)',
+          opacity: 1,
+          offset: 0.3
+        },
+        {
+          transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0)`,
+          opacity: 0
+        }
+      ], {
+        duration: 800,
+        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      });
+      
+      // Clean up
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 800);
     }
   }
 
