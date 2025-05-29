@@ -154,7 +154,13 @@ class GameLevelAirport {
             "Hey, kid. I'm Frank Sinatra — welcome to the bright lights and wild nights of Las Vegas.\nHere, you can test your luck on Blackjack, Poker, or the Minefield Challenge.\nBut remember: in gambling, the swing of fortune can be swift and brutal.\nWant a tip before you step in?",
             [
               { label: "Yes, give me advice", action: () => dialogFunctions.giveAdvice(), keepOpen: true },
-              { label: "Take me to the Casino", action: () => openInModal(`${pagesURI}/gamify/casinohomepage`) },
+              { label: "Take me to the Casino", action: () => {
+                // Give NPC cookie for visiting the casino
+                if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.giveNpcCookie(sprite_data_casino.id, "casino_visited", "Try your luck at the casino games! Play responsibly and remember - the house always has an edge.");
+                }
+                openInModal(`${pagesURI}/gamify/casinohomepage`);
+              }},
               { label: "No thanks", action: () => {} }
             ]
           );
@@ -167,7 +173,13 @@ class GameLevelAirport {
             advice + "\nWant to answer a question before you go in?",
             [
               { label: "Sure, ask me!", action: () => dialogFunctions.askQuestion(), keepOpen: true },
-              { label: "Take me to the Casino", action: () => openInModal(`${pagesURI}/gamify/casinohomepage`) },
+              { label: "Take me to the Casino", action: () => {
+                // Give NPC cookie for visiting the casino
+                if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.giveNpcCookie(sprite_data_casino.id, "casino_visited", "Try your luck at the casino games! Play responsibly and remember - the house always has an edge.");
+                }
+                openInModal(`${pagesURI}/gamify/casinohomepage`);
+              }},
               { label: "Another tip", action: () => dialogFunctions.giveAdvice(), keepOpen: true },
               { label: "Maybe later", action: () => {} }
             ]
@@ -190,12 +202,18 @@ class GameLevelAirport {
             "Frank Sinatra",
             response + "\nReady to try your luck?",
             [
-              { label: "Take me to the Casino", action: () => openInModal(`${pagesURI}/gamify/casinohomepage`) },
+              { label: "Take me to the Casino", action: () => {
+                // Give NPC cookie for visiting the casino
+                if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.giveNpcCookie(sprite_data_casino.id, "casino_visited", "Try your luck at the casino games! Play responsibly and remember - the house always has an edge.");
+                }
+                openInModal(`${pagesURI}/gamify/casinohomepage`);
+              }},
               { label: "Back to advice", action: () => dialogFunctions.giveAdvice(), keepOpen: true },
               { label: "Thanks, Frank!", action: () => {
                 // Give NPC cookie for completing the dialogue
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
-                  gameEnv.game.giveNpcCookie(sprite_data_casino.id, "dialogue_completed");
+                  gameEnv.game.giveNpcCookie(sprite_data_casino.id, "dialogue_completed", "Feel free to come back and visit the casino anytime you want to test your luck!");
                 }
               } }
             ]
