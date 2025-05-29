@@ -568,8 +568,10 @@ function showDialogBox(title, message, options = []) {
     button.onmouseover = () => {
       button.style.backgroundColor = '#fff';
       button.style.color = '#000';
-      sounds.select.currentTime = 0;
-      sounds.select.play();
+      if (window.gameAudioEnabled !== false) {
+        sounds.select.currentTime = 0;
+        sounds.select.play();
+      }
     };
     button.onmouseout = () => {
       button.style.backgroundColor = '#000';
@@ -577,8 +579,10 @@ function showDialogBox(title, message, options = []) {
     };
     button.onclick = () => {
       // Play click sound
-      sounds.click.currentTime = 0;
-      sounds.click.play();
+      if (window.gameAudioEnabled !== false) {
+        sounds.click.currentTime = 0;
+        sounds.click.play();
+      }
       
       // Short delay to let the sound play before action
       setTimeout(() => {
