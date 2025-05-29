@@ -145,6 +145,9 @@ class StatsManager {
             document.head.appendChild(fontLink);
         }
 
+        // Initialize audio toggle button
+        this.initAudioToggle();
+
         // Add retro stats styles
         const style = document.createElement('style');
         style.textContent = `
@@ -1620,6 +1623,10 @@ class Game {
                 }
             });
         }, 3000);
+    }
+
+    initAudioToggle() {
+        // Implementation of initAudioToggle method
     }
 }
 
