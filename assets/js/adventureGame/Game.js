@@ -568,8 +568,9 @@ class StatsManager {
      * Give a specific cookie for an NPC interaction
      * @param {string} npcId - The ID of the NPC
      * @param {string} reward - The reward/cookie value (optional)
+     * @param {string} objective - The new objective to show (optional)
      */
-    giveNpcCookie(npcId, reward = "completed") {
+    giveNpcCookie(npcId, reward = "completed", objective = null) {
         const cookieName = `npc_${npcId}`;
         const cookieValue = reward;
         const expiryDays = 30;
@@ -586,8 +587,8 @@ class StatsManager {
             this.incrementNpcsTalkedTo();
         }
         
-        // Show a notification that they received a cookie
-        this.showNpcCookieNotification(npcId, reward);
+        // Show a notification that they received a cookie with objective
+        this.showNpcCookieNotification(npcId, reward, objective);
         
         // Update the UI to reflect the new cookie count
         this.updateNpcsTalkedToUI(0); // Parameter doesn't matter anymore since we get count from cookies
@@ -634,35 +635,142 @@ class StatsManager {
      * Show a notification when user receives an NPC cookie
      * @param {string} npcId - The ID of the NPC
      * @param {string} reward - The reward received
+     * @param {string} objective - The new objective received
      */
-    showNpcCookieNotification(npcId, reward) {
+    showNpcCookieNotification(npcId, reward, objective) {
         // Create notification element
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
             color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #ffd700;
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.4),
+                0 0 20px rgba(255, 215, 0, 0.3),
+                inset 0 1px 0 rgba(255,255,255,0.1);
             z-index: 10000;
-            font-family: 'Arial', sans-serif;
-            font-size: 14px;
-            max-width: 300px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            max-width: 450px;
+            min-width: 350px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(10px);
+            animation: pulseGlow 2s infinite alternate;
         `;
         
+        // Add glowing animation keyframes if not already present
+        if (!document.querySelector('#notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                @keyframes pulseGlow {
+                    0% { 
+                        box-shadow: 
+                            0 8px 32px rgba(0,0,0,0.4),
+                            0 0 20px rgba(255, 215, 0, 0.3),
+                            inset 0 1px 0 rgba(255,255,255,0.1);
+                    }
+                    100% { 
+                        box-shadow: 
+                            0 8px 32px rgba(0,0,0,0.4),
+                            0 0 30px rgba(255, 215, 0, 0.6),
+                            inset 0 1px 0 rgba(255,255,255,0.2);
+                    }
+                }
+                @keyframes slideUpFadeIn {
+                    0% { 
+                        transform: translateX(-50%) translateY(100%);
+                        opacity: 0;
+                    }
+                    100% { 
+                        transform: translateX(-50%) translateY(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes slideDownFadeOut {
+                    0% { 
+                        transform: translateX(-50%) translateY(0);
+                        opacity: 1;
+                    }
+                    100% { 
+                        transform: translateX(-50%) translateY(100%);
+                        opacity: 0;
+                    }
+                }
+                .notification-icon {
+                    animation: bounce 1s infinite alternate;
+                }
+                @keyframes bounce {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(-5px); }
+                }
+                .objective-text {
+                    animation: typewriter 0.8s steps(40) 0.5s both;
+                    border-right: 2px solid #4CAF50;
+                    animation: typewriter 0.8s steps(40) 0.5s both, blink 1s infinite 1.3s;
+                }
+                @keyframes typewriter {
+                    0% { width: 0; }
+                    100% { width: 100%; }
+                }
+                @keyframes blink {
+                    0%, 50% { border-color: #4CAF50; }
+                    51%, 100% { border-color: transparent; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Build notification content
+        const cookieEmoji = reward === 'quiz_completed' ? '🧠' : reward === 'dialogue_completed' ? '💬' : '🍪';
+        const npcDisplayName = npcId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
         notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 20px;">🍪</span>
-                <div>
-                    <strong>Cookie Earned!</strong><br>
-                    <span style="font-size: 12px; opacity: 0.9;">
-                        ${npcId.replace(/-/g, ' ')}: ${reward}
-                    </span>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- Header with cookie earned -->
+                <div style="display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #333; padding-bottom: 15px;">
+                    <span class="notification-icon" style="font-size: 28px;">${cookieEmoji}</span>
+                    <div style="flex: 1;">
+                        <div style="color: #ffd700; font-size: 14px; margin-bottom: 5px;">
+                            🎉 COOKIE EARNED!
+                        </div>
+                        <div style="color: #fff; font-size: 10px; line-height: 1.4;">
+                            <strong>${npcDisplayName}</strong><br>
+                            <span style="color: #4CAF50;">${reward.replace(/_/g, ' ')}</span>
+                        </div>
+                    </div>
+                    <div style="background: #4CAF50; color: #000; padding: 5px 10px; border-radius: 10px; font-size: 8px; font-weight: bold;">
+                        +1 XP
+                    </div>
+                </div>
+                
+                ${objective ? `
+                    <!-- Objective section -->
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 10px; padding: 15px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <span style="font-size: 16px;">🎯</span>
+                            <span style="color: #4CAF50; font-size: 11px;">NEW OBJECTIVE</span>
+                        </div>
+                        <div class="objective-text" style="color: #fff; font-size: 9px; line-height: 1.5; overflow: hidden; white-space: nowrap;">
+                            ${objective}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Progress indicator -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid #333;">
+                    <div style="display: flex; gap: 5px;">
+                        ${this.generateProgressDots()}
+                    </div>
+                    <div style="color: #888; font-size: 8px;">
+                        Press any key to continue
+                    </div>
                 </div>
             </div>
         `;
@@ -671,18 +779,86 @@ class StatsManager {
         
         // Animate in
         setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
+            notification.style.animation = 'slideUpFadeIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
         }, 100);
         
-        // Animate out and remove after 3 seconds
+        // Play success sound
+        this.playNotificationSound();
+        
+        // Add keyboard listener to dismiss
+        const dismissHandler = (e) => {
+            this.dismissNotification(notification);
+            document.removeEventListener('keydown', dismissHandler);
+        };
+        document.addEventListener('keydown', dismissHandler);
+        
+        // Auto-dismiss after 8 seconds if not manually dismissed
         setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
+            if (notification.parentNode) {
+                this.dismissNotification(notification);
+                document.removeEventListener('keydown', dismissHandler);
+            }
+        }, 8000);
+    }
+
+    dismissNotification(notification) {
+        notification.style.animation = 'slideDownFadeOut 0.4s ease-in forwards';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 400);
+    }
+
+    generateProgressDots() {
+        const allNpcCookies = this.getAllNpcCookies();
+        const totalNpcs = 7; // Total available NPCs
+        const earnedCount = Object.keys(allNpcCookies).length;
+        
+        let dots = '';
+        for (let i = 0; i < totalNpcs; i++) {
+            const isEarned = i < earnedCount;
+            dots += `<div style="
+                width: 8px; 
+                height: 8px; 
+                border-radius: 50%; 
+                background: ${isEarned ? '#4CAF50' : '#333'};
+                border: 1px solid ${isEarned ? '#4CAF50' : '#666'};
+                ${isEarned ? 'box-shadow: 0 0 5px #4CAF50;' : ''}
+            "></div>`;
+        }
+        return dots;
+    }
+
+    playNotificationSound() {
+        // Create a more pleasant notification sound
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Play a nice ascending chord
+        const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
+        
+        frequencies.forEach((freq, index) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0, audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1 + index * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5 + index * 0.1);
+            
+            osc.start(audioContext.currentTime + index * 0.1);
+            osc.stop(audioContext.currentTime + 0.5 + index * 0.1);
+        });
     }
 }
 
@@ -870,9 +1046,10 @@ class Game {
      * Give a cookie to the user for completing an NPC interaction
      * @param {string} npcId - The ID of the NPC
      * @param {string} reward - The reward/cookie value (optional)
+     * @param {string} objective - The new objective to show (optional)
      */
-    giveNpcCookie(npcId, reward = "completed") {
-        return this.statsManager.giveNpcCookie(npcId, reward);
+    giveNpcCookie(npcId, reward = "completed", objective = null) {
+        return this.statsManager.giveNpcCookie(npcId, reward, objective);
     }
 
     /**
