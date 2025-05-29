@@ -1145,53 +1145,53 @@ class StatsManager {
     }
 
     initAmbientSounds() {
-        // Create ambient sound manager
-        this.ambientSoundManager = new AmbientSoundManager();
+        // Create Minecraft-style music manager
+        this.musicManager = new MinecraftMusicManager();
         
-        // Start subtle ambient effects
-        this.ambientSoundManager.startAmbientLoop();
+        // Start music system
+        this.musicManager.startMusicLoop();
         
-        // Add UI interaction sounds
+        // Add UI interaction sounds (keep these)
         this.addUIInteractionSounds();
         
-        // Set up environment detection
-        this.setupEnvironmentDetection();
+        // Set up environment detection for music themes
+        this.setupMusicEnvironmentDetection();
     }
     
-    setupEnvironmentDetection() {
-        // Check current level periodically and update ambient environment
+    setupMusicEnvironmentDetection() {
+        // Check current level periodically and update music theme
         setInterval(() => {
             if (this.gameControl && this.gameControl.currentLevel) {
                 const levelName = this.gameControl.currentLevel.constructor.name.toLowerCase();
-                let environment = 'default';
+                let musicTheme = 'overworld';
                 
-                // Map level names to environments
+                // Map level names to music themes
                 if (levelName.includes('office')) {
-                    environment = 'office';
+                    musicTheme = 'creative';
                 } else if (levelName.includes('casino')) {
-                    environment = 'casino';
+                    musicTheme = 'nether';
                 } else if (levelName.includes('bank')) {
-                    environment = 'bank';
+                    musicTheme = 'calm';
                 } else if (levelName.includes('airport')) {
-                    environment = 'airport';
+                    musicTheme = 'creative';
                 } else if (levelName.includes('desert')) {
-                    environment = 'desert';
+                    musicTheme = 'dry';
                 } else if (levelName.includes('underground') || levelName.includes('cave')) {
-                    environment = 'underground';
+                    musicTheme = 'cave';
                 }
                 
-                // Update ambient environment if it changed
-                if (this.ambientSoundManager.currentEnvironment !== environment) {
-                    this.ambientSoundManager.setEnvironment(environment);
+                // Update music theme if it changed
+                if (this.musicManager.currentTheme !== musicTheme) {
+                    this.musicManager.setMusicTheme(musicTheme);
                 }
             }
-        }, 2000); // Check every 2 seconds
+        }, 3000); // Check every 3 seconds
     }
     
-    // Method to manually set environment (can be called from level files)
-    setAmbientEnvironment(environment) {
-        if (this.ambientSoundManager) {
-            this.ambientSoundManager.setEnvironment(environment);
+    // Method to manually set music theme
+    setMusicTheme(theme) {
+        if (this.musicManager) {
+            this.musicManager.setMusicTheme(theme);
         }
     }
     
@@ -1204,7 +1204,7 @@ class StatsManager {
         const addHoverSound = (element) => {
             element.addEventListener('mouseenter', () => {
                 if (window.gameAudioEnabled !== false) {
-                    this.ambientSoundManager.playUIHoverSound();
+                    this.musicManager.playUIHoverSound();
                 }
             });
         };
@@ -1212,7 +1212,7 @@ class StatsManager {
         const addClickSound = (element) => {
             element.addEventListener('click', () => {
                 if (window.gameAudioEnabled !== false) {
-                    this.ambientSoundManager.playUIClickSound();
+                    this.musicManager.playUIClickSound();
                 }
             });
         };
