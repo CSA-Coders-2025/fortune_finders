@@ -222,29 +222,58 @@ class Player extends Character {
     }
 
     /**
+     * Detect the surface type based on game environment or level
+     * This can be expanded to detect different surfaces based on level/location
+     */
+    detectSurface() {
+        // Basic surface detection - can be enhanced based on game level
+        const currentLevel = this.gameEnv?.currentLevel || 'unknown';
+        
+        // Map levels to surface types
+        const levelSurfaceMap = {
+            'desert': 'sand',
+            'casino': 'carpet',
+            'office': 'carpet',
+            'bank': 'stone',
+            'airport': 'stone',
+            'wallstreet': 'stone',
+            'default': 'default'
+        };
+        
+        return levelSurfaceMap[currentLevel] || 'default';
+    }
+
+    /**
      * Update the player's velocity and direction based on the pressed keys.
      */
     updateVelocityAndDirection() {
         this.velocity.x = 0;
         this.velocity.y = 0;
+        
+        // Store previous movement state
+        const wasMovingBefore = this.moved;
 
         // Multi-key movements (diagonals: upLeft, upRight, downLeft, downRight)
         if (this.pressedKeys[this.keypress.up] && this.pressedKeys[this.keypress.left]) {
             this.velocity.y -= this.yVelocity;
             this.velocity.x -= this.xVelocity;
             this.direction = 'upLeft';
+            this.moved = true;
         } else if (this.pressedKeys[this.keypress.up] && this.pressedKeys[this.keypress.right]) {
             this.velocity.y -= this.yVelocity;
             this.velocity.x += this.xVelocity;
             this.direction = 'upRight';
+            this.moved = true;
         } else if (this.pressedKeys[this.keypress.down] && this.pressedKeys[this.keypress.left]) {
             this.velocity.y += this.yVelocity;
             this.velocity.x -= this.xVelocity;
             this.direction = 'downLeft';
+            this.moved = true;
         } else if (this.pressedKeys[this.keypress.down] && this.pressedKeys[this.keypress.right]) {
             this.velocity.y += this.yVelocity;
             this.velocity.x += this.xVelocity;
             this.direction = 'downRight';
+            this.moved = true;
         // Single key movements (left, right, up, down) 
         } else if (this.pressedKeys[this.keypress.up]) {
             this.velocity.y -= this.yVelocity;
@@ -265,7 +294,34 @@ class Player extends Character {
         } else{
             this.moved = false;
         }
+        
+        // Handle movement sound effects
+        this.handleMovementSounds(wasMovingBefore);
     }
+    
+    /**
+     * Handle movement sound effects based on movement state changes
+     */
+    handleMovementSounds(wasMovingBefore) {
+        // Update current surface based on environment
+        this.currentSurface = this.detectSurface();
+        
+        // Starting to move
+        if (this.moved && !wasMovingBefore) {
+            this.soundManager.playStartMovementSound();
+            this.wasMoving = true;
+        }
+        // Continuing to move
+        else if (this.moved && wasMovingBefore) {
+            this.soundManager.playMovementSound(this.direction, this.currentSurface);
+        }
+        // Stopping movement
+        else if (!this.moved && wasMovingBefore) {
+            this.soundManager.playStopMovementSound();
+            this.wasMoving = false;
+        }
+    }
+
     update() {
         super.update();
         if(!this.moved){
@@ -287,12 +343,66 @@ class Player extends Character {
      * @param {*} other - The object that the player is colliding with
      */
     handleCollisionReaction(other) {    
+        // Play collision sound effect
+        this.playCollisionSound(other);
+        
         this.pressedKeys = {};
         this.updateVelocityAndDirection();
         super.handleCollisionReaction(other);
     }
-
-
+    
+    /**
+     * Play collision sound effect based on the object collided with
+     */
+    playCollisionSound(other) {
+        if (!window.gameAudioEnabled) return;
+        
+        try {
+            const now = this.soundManager.audioContext.currentTime;
+            
+            // Create collision sound
+            const osc = this.soundManager.audioContext.createOscillator();
+            const gain = this.soundManager.audioContext.createGain();
+            const filter = this.soundManager.audioContext.createBiquadFilter();
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.soundManager.audioContext.destination);
+            
+            // Different sounds based on collision type
+            let frequency = 150;
+            let volume = 0.1;
+            
+            if (other && other.constructor.name) {
+                const objectType = other.constructor.name.toLowerCase();
+                if (objectType.includes('wall') || objectType.includes('barrier')) {
+                    frequency = 200; // Higher pitch for walls
+                    volume = 0.15;
+                } else if (objectType.includes('npc') || objectType.includes('character')) {
+                    frequency = 300; // Even higher for characters
+                    volume = 0.08; // Softer for characters
+                } else if (objectType.includes('platform')) {
+                    frequency = 120; // Lower for platforms
+                    volume = 0.12;
+                }
+            }
+            
+            osc.frequency.setValueAtTime(frequency, now);
+            osc.type = 'triangle';
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(600, now);
+            
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(volume, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } catch (e) {
+            console.log("Collision sound error:", e);
+        }
+    }
 }
 
 export default Player;
