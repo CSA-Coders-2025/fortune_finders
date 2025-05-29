@@ -147,6 +147,9 @@ class StatsManager {
 
         // Initialize audio toggle button
         this.initAudioToggle();
+        
+        // Initialize ambient sound system
+        this.initAmbientSounds();
 
         // Add retro stats styles
         const style = document.createElement('style');
