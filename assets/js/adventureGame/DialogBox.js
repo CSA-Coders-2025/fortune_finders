@@ -356,6 +356,37 @@ function showDialogBox(title, message, options = []) {
   titleElement.style.textAlign = 'center';
   innerContainer.appendChild(titleElement);
 
+  // Add skip hint (will be hidden when typing completes)
+  const skipHint = document.createElement('div');
+  skipHint.id = 'skip-hint';
+  skipHint.innerHTML = '💡 Press any key to skip typing';
+  skipHint.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 8px;
+    color: #888;
+    opacity: 0.7;
+    font-family: 'Press Start 2P', cursive;
+    animation: skipHintBlink 2s infinite;
+    pointer-events: none;
+  `;
+  
+  // Add CSS for skip hint animation if not present
+  if (!document.getElementById('skip-hint-styles')) {
+    const style = document.createElement('style');
+    style.id = 'skip-hint-styles';
+    style.textContent = `
+      @keyframes skipHintBlink {
+        0%, 70% { opacity: 0.7; }
+        85%, 100% { opacity: 0.3; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  innerContainer.appendChild(skipHint);
+
   const messageElement = document.createElement('div');
   messageElement.className = 'dialog-text typing';
   messageElement.style.marginBottom = '24px';
