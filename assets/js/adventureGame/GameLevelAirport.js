@@ -547,15 +547,15 @@ class GameLevelAirport {
       }
     };
 
-const sprite_src_mining = path + "/images/gamify/miningRigMan.png";
+    const sprite_src_mining = path + "/images/gamify/miningRigMan.png";
     const sprite_data_mining = {
       id: 'Mining-NPC',
-      greeting: "Greetings, seeker. I am Jery , geologist of decentralized currency.",
+      greeting: "Hey there! I'm Max, your friendly neighborhood crypto miner. Let's talk about mining!",
       src: sprite_src_mining,
-      SCALE_FACTOR: 6,
+      SCALE_FACTOR: 5,
       ANIMATION_RATE: 50,
-      pixels: { height: 500, width: 500 },
-      INIT_POSITION: { x: width * 0.67, y: height * 0.24 },
+      pixels: { height: 282, width: 282 },
+      INIT_POSITION: { x: width * 0.82, y: height * 0.35 },
       orientation: { rows: 1, columns: 1 },
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
@@ -563,69 +563,140 @@ const sprite_src_mining = path + "/images/gamify/miningRigMan.png";
         // Define dialog functions
         const dialogFunctions = {
           intro: function() {
-          showDialogBox(
-            "Satoshi Nakamoto",
-            "Greetings, seeker. I am Satoshi Nakamoto, architect of decentralized currency.\nAre you curious about Bitcoin or ready to explore the Crypto Hub?",
-            [
-                { label: "Tell me about Bitcoin", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true },
-              { label: "Go to Crypto Hub", action: () => openInModal(`${pagesURI}/crypto/portfolio`) },
-              { label: "Goodbye", action: () => {} }
-            ]
-          );
+            showDialogBox(
+              "Max the Miner",
+              "Hey there! I'm Max, your friendly neighborhood crypto miner. I've been mining Bitcoin since the early days!\nWant to learn about mining or try your hand at it?",
+              [
+                { label: "Tell me about mining", action: () => dialogFunctions.explainMining(), keepOpen: true },
+                { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
+                { label: "What's your setup?", action: () => dialogFunctions.mySetup(), keepOpen: true },
+                { label: "Thank you, Max", action: () => {
+                  // Give NPC cookie for completing the dialogue
+                  if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                    gameEnv.game.giveNpcCookie(sprite_data_mining.id, "dialogue_completed");
+                  }
+                } }
+              ]
+            );
           },
-          aboutBitcoin: function() {
-          showDialogBox(
-            "Satoshi Nakamoto",
-            "Bitcoin is a decentralized digital currency, born from a desire for freedom and transparency. It operates without banks or governments.\nWould you like to know how to buy or mine Bitcoin?",
-            [
-                { label: "How do I buy Bitcoin?", action: () => dialogFunctions.howToBuy(), keepOpen: true },
-                { label: "How do I mine Bitcoin?", action: () => dialogFunctions.howToMine(), keepOpen: true },
+          explainMining: function() {
+            showDialogBox(
+              "Max the Miner",
+              "Mining is like solving complex puzzles to verify transactions on the blockchain. Miners use powerful computers to compete for rewards in cryptocurrency.\nThe more computing power you have, the better your chances of winning!\nWould you like to know more about the technical side?",
+              [
+                { label: "Technical Details", action: () => dialogFunctions.technicalDetails(), keepOpen: true },
+                { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
                 { label: "Back", action: () => dialogFunctions.intro(), keepOpen: true }
-            ]
-          );
+              ]
+            );
           },
-          howToBuy: function() {
-          showDialogBox(
-            "Satoshi Nakamoto",
-            "To buy Bitcoin, you need a digital wallet and access to a crypto exchange. You can purchase fractions of a Bitcoin.\nWould you like to visit the Crypto Hub to start your journey?",
-            [
-              { label: "Yes, take me there", action: () => openInModal(`${pagesURI}/crypto/portfolio`) },
-              { label: "Back", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true }
-            ]
-          );
+          technicalDetails: function() {
+            showDialogBox(
+              "Max the Miner",
+              "Here's the cool stuff:\n• Mining uses SHA-256 hashing algorithm\n• Difficulty adjusts automatically\n• You need specialized hardware (ASICs) for Bitcoin\n• Electricity costs are crucial\n• Mining pools help small miners compete\n\nReady to try mining yourself?",
+              [
+                { label: "Start Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
+                { label: "Back", action: () => dialogFunctions.explainMining(), keepOpen: true }
+              ]
+            );
           },
-          howToMine: function() {
-          showDialogBox(
-            "Satoshi Nakamoto",
-            "Mining Bitcoin requires powerful computers to solve complex puzzles. Miners are rewarded with Bitcoin for verifying transactions.\nWould you like to try mining or learn more?",
-            [
-              { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
-              { label: "Back", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true }
-            ]
-          );
-        }
+          mySetup: function() {
+            showDialogBox(
+              "Max the Miner",
+              "I've got a sweet setup:\n• 10 ASIC miners running 24/7\n• Custom cooling system to keep them frosty\n• Solar panels to offset electricity costs\n• Mining pool connection for consistent rewards\n\nWant to see how it all works?",
+              [
+                { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
+                { label: "Back", action: () => dialogFunctions.intro(), keepOpen: true }
+              ]
+            );
+          }
         };
 
         function openInModal(url) {
-          cryptoFrame.src = url;
-          cryptoModal.style.display = "flex";
+          let modal = document.getElementById('miningModal');
+          if (!modal) {
+            modal = document.createElement("div");
+            modal.id = "miningModal";
+            modal.style.position = "fixed";
+            modal.style.top = "0";
+            modal.style.left = "0";
+            modal.style.width = "100vw";
+            modal.style.height = "100vh";
+            modal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+            modal.style.display = "none";
+            modal.style.justifyContent = "center";
+            modal.style.alignItems = "center";
+            modal.style.zIndex = "1000";
+            document.body.appendChild(modal);
+
+            const iframeWrapper = document.createElement("div");
+            iframeWrapper.id = "miningFrameWrapper";
+            iframeWrapper.style.position = "relative";
+            iframeWrapper.style.overflow = "hidden";
+            iframeWrapper.style.width = "90%";
+            iframeWrapper.style.maxWidth = "1000px";
+            iframeWrapper.style.height = "80%";
+            iframeWrapper.style.border = "2px solid #ccc";
+            iframeWrapper.style.borderRadius = "8px";
+            iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
+            modal.appendChild(iframeWrapper);
+
+            const miningFrame = document.createElement("iframe");
+            miningFrame.id = "miningFrame";
+            miningFrame.style.width = "100%";
+            miningFrame.style.height = "110%";
+            miningFrame.style.position = "absolute";
+            miningFrame.style.top = "-10%";
+            miningFrame.style.left = "0";
+            miningFrame.style.border = "none";
+            iframeWrapper.appendChild(miningFrame);
+
+            const closeBtn = document.createElement("button");
+            closeBtn.innerText = "✖";
+            closeBtn.style.position = "absolute";
+            closeBtn.style.top = "10px";
+            closeBtn.style.right = "10px";
+            closeBtn.style.fontSize = "24px";
+            closeBtn.style.background = "#00ff80";
+            closeBtn.style.color = "#000";
+            closeBtn.style.border = "none";
+            closeBtn.style.padding = "10px 15px";
+            closeBtn.style.borderRadius = "5px";
+            closeBtn.style.cursor = "pointer";
+            closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
+            closeBtn.style.zIndex = "1100";
+            closeBtn.style.transition = "all 0.3s ease";
+            closeBtn.onmouseover = () => {
+              closeBtn.style.background = "#00cc66";
+              closeBtn.style.transform = "scale(1.1)";
+            };
+            closeBtn.onmouseout = () => {
+              closeBtn.style.background = "#00ff80";
+              closeBtn.style.transform = "scale(1)";
+            };
+            closeBtn.onclick = () => {
+              modal.style.display = "none";
+              miningFrame.src = "";
+            };
+            iframeWrapper.appendChild(closeBtn);
+          }
+          const miningFrame = document.getElementById('miningFrame');
+          miningFrame.src = url;
+          modal.style.display = "flex";
         }
 
-        // Return the dialog functions so they can be accessed from interact
         return dialogFunctions;
       },
       interact: async function () {
         const game = gameEnv.game;
         const npcProgressSystem = new NpcProgressSystem();
-        const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_crypto.id);
+        const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_mining.id);
         if (allowed) {
-          const dialogFunctions = sprite_data_crypto.reaction();
+          const dialogFunctions = sprite_data_mining.reaction();
           dialogFunctions.intro();
         }
       }
     };
-
-
 
     const sprite_src_fidelity = path + "/images/gamify/fidelitygirl.png";
     const sprite_data_fidelity = {
@@ -979,7 +1050,8 @@ const sprite_src_mining = path + "/images/gamify/miningRigMan.png";
       { class: Npc, data: sprite_data_fidelity },
       { class: Npc, data: sprite_data_schwab },
       { class: Npc, data: sprite_data_computer },
-      { class: Npc, data: sprite_data_bank}
+      { class: Npc, data: sprite_data_bank},
+      { class: Npc, data: sprite_data_mining}
     ];
     this.npcProgressSystem = new NpcProgressSystem();
   }
