@@ -339,25 +339,35 @@ class DialogueSystem {
           try {
             if (char === ' ') {
               // Different sound for spacebar
-              this.typewriterSound.playSpace();
+              if (window.gameAudioEnabled !== false) {
+                this.typewriterSound.playSpace();
+              }
             } else if (char === '\n' || char === '\r') {
               // Reset line length for new lines
               lineLength = 0;
-              this.typewriterSound.playKey();
+              if (window.gameAudioEnabled !== false) {
+                this.typewriterSound.playKey();
+              }
             } else if ('.,!?;:'.includes(char)) {
               // Regular key sound for punctuation
-              this.typewriterSound.playKey();
+              if (window.gameAudioEnabled !== false) {
+                this.typewriterSound.playKey();
+              }
               // Add a pause after punctuation
               this.typewriterTimeout = setTimeout(typeChar, 120 + Math.random() * 80);
               return;
             } else {
               // Regular key sound
-              this.typewriterSound.playKey();
+              if (window.gameAudioEnabled !== false) {
+                this.typewriterSound.playKey();
+              }
             }
             
             // Typewriter bell when approaching end of line
             if (lineLength >= maxLineLength && char === ' ') {
-              this.typewriterSound.playBell();
+              if (window.gameAudioEnabled !== false) {
+                this.typewriterSound.playBell();
+              }
               lineLength = 0; // Reset after bell
             }
             
