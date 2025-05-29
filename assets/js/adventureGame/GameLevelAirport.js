@@ -846,7 +846,7 @@ class GameLevelAirport {
 }
 
 export default GameLevelAirport;
-// Make GameLevelAirport available globally for auto-instantiation
+// Make GameLevelAirport available globally for auto-instntiation
 if (typeof window !== 'undefined') {
   window.GameLevelAirport = GameLevelAirport;
 }
