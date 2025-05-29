@@ -442,34 +442,38 @@ function showDialogBox(title, message, options = []) {
       // Play appropriate sound based on character type
       if (charIndex % 2 === 0) { // Reduce frequency to avoid overwhelming
         try {
-          if (char === ' ') {
-            // Different sound for spacebar
-            sounds.realisticTypewriter.playSpace();
-          } else if (char === '\n' || char === '\r') {
-            // Carriage return sound for new lines
-            sounds.realisticTypewriter.playCarriageReturn();
-            lineLength = 0; // Reset line length
-          } else if ('.,!?;:'.includes(char)) {
-            // Slightly different sound for punctuation (more emphasis)
-            sounds.realisticTypewriter.playKey();
-            // Add a tiny pause after punctuation
-            setTimeout(typeWriter, 150 + Math.random() * 100);
-            return;
-          } else {
-            // Regular key sound
-            sounds.realisticTypewriter.playKey();
+          // Check if audio is enabled globally
+          if (window.gameAudioEnabled !== false) {
+            if (char === ' ') {
+              // Different sound for spacebar
+              sounds.realisticTypewriter.playSpace();
+            } else if (char === '\n' || char === '\r') {
+              // Carriage return sound for new lines
+              sounds.realisticTypewriter.playCarriageReturn();
+              lineLength = 0; // Reset line length
+            } else if ('.,!?;:'.includes(char)) {
+              // Slightly different sound for punctuation (more emphasis)
+              sounds.realisticTypewriter.playKey();
+              // Add a tiny pause after punctuation
+              setTimeout(typeWriter, 150 + Math.random() * 100);
+              return;
+            } else {
+              // Regular key sound
+              sounds.realisticTypewriter.playKey();
+            }
+            
+            // Typewriter bell when approaching end of line
+            if (lineLength >= maxLineLength && char === ' ') {
+              sounds.realisticTypewriter.playBell();
+              lineLength = 0; // Reset after bell
+            }
           }
-          
-          // Typewriter bell when approaching end of line
-          if (lineLength >= maxLineLength && char === ' ') {
-            sounds.realisticTypewriter.playBell();
-            lineLength = 0; // Reset after bell
-          }
-          
         } catch (e) {
           // Fallback to original sound if realistic fails
-          sounds.typewriter.currentTime = 0;
-          sounds.typewriter.play();
+          if (window.gameAudioEnabled !== false) {
+            sounds.typewriter.currentTime = 0;
+            sounds.typewriter.play();
+          }
         }
       }
       
