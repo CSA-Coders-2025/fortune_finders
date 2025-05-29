@@ -435,7 +435,7 @@ class GameLevelAirport {
       cryptoFrame.src = "";
     };
     iframeWrapper.appendChild(closeBtn);
-
+//adsf
     const sprite_src_crypto = path + "/images/gamify/satoshiNakamoto.png";
     const sprite_data_crypto = {
       id: 'Crypto-NPC',
