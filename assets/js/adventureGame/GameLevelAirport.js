@@ -239,7 +239,7 @@ class GameLevelAirport {
           stocksModal.style.zIndex = "1000";
           document.body.appendChild(stocksModal);
 
-          // Create iframe wrapper
+          // Create iframe wrapperr
           const iframeWrapper = document.createElement("div");
           iframeWrapper.id = "stocksFrameWrapper";
           iframeWrapper.style.position = "relative";
