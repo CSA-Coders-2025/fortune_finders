@@ -593,6 +593,11 @@ class StatsManager {
         // Update the UI to reflect the new cookie count
         this.updateNpcsTalkedToUI(0); // Parameter doesn't matter anymore since we get count from cookies
         
+        // Notify the waypoint arrow system if it exists
+        if (window.waypointArrow && isFirstTime) {
+            window.waypointArrow.onCookieEarned(npcId);
+        }
+        
         console.log(`NPC Cookie awarded: ${cookieName}=${cookieValue}`);
     }
 
