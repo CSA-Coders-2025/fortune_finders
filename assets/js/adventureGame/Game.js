@@ -598,6 +598,13 @@ class StatsManager {
             window.waypointArrow.onCookieEarned(npcId);
         }
         
+        // Update progress bar
+        if (isFirstTime) {
+            setTimeout(() => {
+                this.game.updateProgressBar();
+            }, 500); // Slight delay for better visual timing
+        }
+        
         console.log(`NPC Cookie awarded: ${cookieName}=${cookieValue}`);
     }
 
@@ -643,6 +650,9 @@ class StatsManager {
      * @param {string} objective - The new objective received
      */
     showNpcCookieNotification(npcId, reward, objective) {
+        // Create particle effects first
+        this.createCookieParticles();
+        
         // Create notification element
         const notification = document.createElement('div');
         notification.style.cssText = `
@@ -868,6 +878,85 @@ class StatsManager {
             osc.stop(audioContext.currentTime + 0.5 + index * 0.1);
         });
     }
+
+    createCookieParticles() {
+        // Create multiple sparkle particles
+        const particles = [];
+        const particleCount = 15;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: fixed;
+                bottom: 200px;
+                left: 50%;
+                width: 8px;
+                height: 8px;
+                background: ${this.getRandomSparkleColor()};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                box-shadow: 0 0 6px ${this.getRandomSparkleColor()};
+            `;
+            
+            document.body.appendChild(particle);
+            particles.push(particle);
+            
+            // Animate each particle
+            this.animateParticle(particle, i);
+        }
+        
+        // Clean up particles after animation
+        setTimeout(() => {
+            particles.forEach(particle => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            });
+        }, 2000);
+    }
+
+    getRandomSparkleColor() {
+        const colors = ['#ffd700', '#ffeb3b', '#4CAF50', '#03a9f4', '#e91e63', '#ff9800'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    animateParticle(particle, index) {
+        // Random direction and distance
+        const angle = (Math.PI * 2 * index) / 15 + (Math.random() - 0.5) * 0.5;
+        const distance = 100 + Math.random() * 150;
+        const duration = 1500 + Math.random() * 500;
+        
+        const deltaX = Math.cos(angle) * distance;
+        const deltaY = Math.sin(angle) * distance - 50; // Slight upward bias
+        
+        // Create keyframes for the animation
+        const keyframes = [
+            {
+                transform: 'translate(-50%, 0) scale(0)',
+                opacity: 0
+            },
+            {
+                transform: 'translate(-50%, 0) scale(1)',
+                opacity: 1,
+                offset: 0.1
+            },
+            {
+                transform: `translate(calc(-50% + ${deltaX}px), ${deltaY}px) scale(0.5)`,
+                opacity: 0.7,
+                offset: 0.7
+            },
+            {
+                transform: `translate(calc(-50% + ${deltaX}px), ${deltaY - 30}px) scale(0)`,
+                opacity: 0
+            }
+        ];
+        
+        particle.animate(keyframes, {
+            duration: duration,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        });
+    }
 }
 
 class InventoryManager {
@@ -978,6 +1067,7 @@ class Game {
         
         this.initUser();
         this.inventoryManager.giveStartingItems();
+        this.initProgressBar();
         this.showGameInstructions();
         
         // Add keyboard event listener for 'H' key
@@ -1308,6 +1398,213 @@ class Game {
             const emoji = reward === 'quiz_completed' ? '🧠' : reward === 'dialogue_completed' ? '💬' : '✅';
             return `<span style="color: #4CAF50;">${emoji} ${npcId.replace(/-/g, ' ')}: ${reward}</span>`;
         }).join('<br>');
+    }
+
+    initProgressBar() {
+        // Create progress bar container
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'game-progress-bar';
+        progressContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9998;
+            border-bottom: 2px solid #333;
+            backdrop-filter: blur(5px);
+        `;
+
+        // Create progress fill
+        const progressFill = document.createElement('div');
+        progressFill.id = 'game-progress-fill';
+        progressFill.style.cssText = `
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+            background-size: 400% 100%;
+            animation: progressGradient 3s ease infinite;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        `;
+
+        // Create sparkle overlay
+        const sparkleOverlay = document.createElement('div');
+        sparkleOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: sparkleMove 2s linear infinite;
+        `;
+
+        // Add progress text
+        const progressText = document.createElement('div');
+        progressText.id = 'game-progress-text';
+        progressText.style.cssText = `
+            position: fixed;
+            top: 15px;
+            left: 20px;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 9999;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            backdrop-filter: blur(5px);
+        `;
+
+        // Add CSS animations if not present
+        if (!document.getElementById('progress-bar-styles')) {
+            const style = document.createElement('style');
+            style.id = 'progress-bar-styles';
+            style.textContent = `
+                @keyframes progressGradient {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                
+                @keyframes sparkleMove {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+                
+                @keyframes progressPulse {
+                    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+                    50% { box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.4); }
+                    100% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        progressFill.appendChild(sparkleOverlay);
+        progressContainer.appendChild(progressFill);
+        document.body.appendChild(progressContainer);
+        document.body.appendChild(progressText);
+
+        // Initialize progress
+        this.updateProgressBar();
+    }
+
+    updateProgressBar() {
+        const progressFill = document.getElementById('game-progress-fill');
+        const progressText = document.getElementById('game-progress-text');
+        
+        if (!progressFill || !progressText) return;
+
+        // Calculate progress based on NPC cookies
+        const totalNpcs = 7; // Total available NPCs
+        const npcCookies = this.getAllNpcCookies();
+        const completedNpcs = Object.keys(npcCookies).length;
+        const progressPercentage = (completedNpcs / totalNpcs) * 100;
+
+        // Update progress bar
+        progressFill.style.width = `${progressPercentage}%`;
+        
+        // Update text
+        progressText.textContent = `Progress: ${completedNpcs}/${totalNpcs} NPCs (${Math.round(progressPercentage)}%)`;
+
+        // Add pulse effect when progress increases
+        if (progressPercentage > 0) {
+            progressFill.style.animation = 'progressGradient 3s ease infinite, progressPulse 1s ease-out';
+            setTimeout(() => {
+                progressFill.style.animation = 'progressGradient 3s ease infinite';
+            }, 1000);
+        }
+
+        // Special effect when completed
+        if (completedNpcs === totalNpcs) {
+            progressText.textContent = '🎉 QUEST COMPLETE! 🎉';
+            progressText.style.color = '#ffd700';
+            progressFill.style.background = 'linear-gradient(90deg, #ffd700, #ffeb3b, #ffd700)';
+            this.showCompletionCelebration();
+        }
+    }
+
+    showCompletionCelebration() {
+        // Create massive celebration effect
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                this.createCelebrationFirework();
+            }, i * 100);
+        }
+    }
+
+    createCelebrationFirework() {
+        const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
+        const particles = [];
+        const particleCount = 20;
+        
+        // Random position on screen
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight * 0.6; // Upper part of screen
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: fixed;
+                left: ${x}px;
+                top: ${y}px;
+                width: 8px;
+                height: 8px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 10001;
+                box-shadow: 0 0 10px currentColor;
+            `;
+            
+            document.body.appendChild(particle);
+            particles.push(particle);
+            
+            // Animate particle
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const distance = 100 + Math.random() * 150;
+            const deltaX = Math.cos(angle) * distance;
+            const deltaY = Math.sin(angle) * distance;
+            
+            particle.animate([
+                {
+                    transform: 'translate(-50%, -50%) scale(0)',
+                    opacity: 1
+                },
+                {
+                    transform: 'translate(-50%, -50%) scale(1)',
+                    opacity: 1,
+                    offset: 0.1
+                },
+                {
+                    transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0.5)`,
+                    opacity: 0.5,
+                    offset: 0.8
+                },
+                {
+                    transform: `translate(calc(-50% + ${deltaX * 1.2}px), calc(-50% + ${deltaY * 1.2}px)) scale(0)`,
+                    opacity: 0
+                }
+            ], {
+                duration: 2000 + Math.random() * 1000,
+                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            });
+        }
+        
+        // Clean up particles
+        setTimeout(() => {
+            particles.forEach(particle => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            });
+        }, 3000);
     }
 }
 
