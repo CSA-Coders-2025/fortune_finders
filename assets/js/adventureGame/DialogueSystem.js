@@ -39,42 +39,115 @@ class DialogueSystem {
     this.typewriterTimeout = null;
   }
 
-  // Create typewriter sound effect
+  // Create realistic typewriter sound effect
   createTypewriterSound() {
     if (!this.enableSound) return null;
     
-    // Create a retro typewriter sound using Web Audio API
+    // Create a realistic typewriter sound using Web Audio API
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Function to play a single typewriter click
-    const playTypewriterClick = () => {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      const filterNode = audioContext.createBiquadFilter();
+    // Create realistic key click sound
+    const playKeyClick = () => {
+      // Create multiple sound layers for realistic mechanical sound
+      const now = audioContext.currentTime;
       
-      oscillator.connect(filterNode);
-      filterNode.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      // Main click sound (mechanical strike)
+      const osc1 = audioContext.createOscillator();
+      const gain1 = audioContext.createGain();
+      const filter1 = audioContext.createBiquadFilter();
       
-      // Create a sharp click sound
-      oscillator.frequency.setValueAtTime(800 + Math.random() * 400, audioContext.currentTime);
-      oscillator.type = 'square';
+      osc1.connect(filter1);
+      filter1.connect(gain1);
+      gain1.connect(audioContext.destination);
       
-      // Add some filtering for a more mechanical sound
-      filterNode.type = 'lowpass';
-      filterNode.frequency.setValueAtTime(2000, audioContext.currentTime);
+      // Sharp attack with metallic click
+      osc1.frequency.setValueAtTime(1200 + Math.random() * 800, now);
+      osc1.type = 'square';
+      filter1.type = 'bandpass';
+      filter1.frequency.setValueAtTime(2000 + Math.random() * 1000, now);
+      filter1.Q.setValueAtTime(2, now);
       
-      // Quick attack and decay for click effect
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(0.12, now + 0.003);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
       
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.05);
+      osc1.start(now);
+      osc1.stop(now + 0.02);
+      
+      // Secondary mechanical thud
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      const filter2 = audioContext.createBiquadFilter();
+      
+      osc2.connect(filter2);
+      filter2.connect(gain2);
+      gain2.connect(audioContext.destination);
+      
+      osc2.frequency.setValueAtTime(200 + Math.random() * 150, now);
+      osc2.type = 'sawtooth';
+      filter2.type = 'lowpass';
+      filter2.frequency.setValueAtTime(800, now);
+      
+      gain2.gain.setValueAtTime(0, now);
+      gain2.gain.linearRampToValueAtTime(0.06, now + 0.002);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      
+      osc2.start(now);
+      osc2.stop(now + 0.05);
+    };
+    
+    // Space bar sound (different from regular keys)
+    const playSpacebarClick = () => {
+      const now = audioContext.currentTime;
+      
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioContext.destination);
+      
+      // Lower, duller sound for spacebar
+      osc.frequency.setValueAtTime(150 + Math.random() * 100, now);
+      osc.type = 'square';
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(500, now);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      
+      osc.start(now);
+      osc.stop(now + 0.08);
+    };
+    
+    // Typewriter bell sound
+    const playBell = () => {
+      const now = audioContext.currentTime;
+      
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      
+      osc.frequency.setValueAtTime(2000, now);
+      osc.frequency.exponentialRampToValueAtTime(1800, now + 0.1);
+      osc.type = 'sine';
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.06, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      
+      osc.start(now);
+      osc.stop(now + 0.4);
     };
     
     return {
-      play: playTypewriterClick,
+      playKey: playKeyClick,
+      playSpace: playSpacebarClick,
+      playBell: playBell,
       audioContext: audioContext
     };
   }
@@ -259,7 +332,7 @@ class DialogueSystem {
         // Play typewriter sound for non-space characters and every other character
         if (this.typewriterSound && message[charIndex - 1] !== ' ' && charIndex % 2 === 0) {
           try {
-            this.typewriterSound.play();
+            this.typewriterSound.playKey();
           } catch (e) {
             console.log("Typewriter sound error:", e);
           }
