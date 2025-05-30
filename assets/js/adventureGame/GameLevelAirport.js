@@ -501,7 +501,6 @@ class GameLevelAirport {
             "Bitcoin is a decentralized digital currency, born from a desire for freedom and transparency. It operates without banks or governments.\nWould you like to know how to buy or mine Bitcoin?",
             [
                 { label: "How do I buy Bitcoin?", action: () => dialogFunctions.howToBuy(), keepOpen: true },
-                { label: "How do I mine Bitcoin?", action: () => dialogFunctions.howToMine(), keepOpen: true },
                 { label: "Back", action: () => dialogFunctions.intro(), keepOpen: true }
             ]
           );
@@ -516,16 +515,7 @@ class GameLevelAirport {
             ]
           );
           },
-          howToMine: function() {
-          showDialogBox(
-            "Satoshi Nakamoto",
-            "Mining Bitcoin requires powerful computers to solve complex puzzles. Miners are rewarded with Bitcoin for verifying transactions.\nWould you like to try mining or learn more?",
-            [
-              { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
-              { label: "Back", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true }
-            ]
-          );
-        }
+
         };
 
         function openInModal(url) {
