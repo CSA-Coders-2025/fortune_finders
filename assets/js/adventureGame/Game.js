@@ -1248,7 +1248,12 @@ class StatsManager {
 // Minecraft-Style Music Manager Class
 class MinecraftMusicManager {
     constructor() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Audio context not available:', e);
+            this.audioContext = null;
+        }
         this.isPlaying = false;
         this.currentTheme = 'overworld';
         this.musicGain = null;
@@ -1362,7 +1367,7 @@ class MinecraftMusicManager {
     }
     
     startMusicLoop() {
-        if (!window.gameAudioEnabled) return;
+        if (!window.gameAudioEnabled || !this.audioContext) return;
         
         // Schedule first track after 30-90 seconds (like Minecraft)
         const initialDelay = 30000 + Math.random() * 60000;
@@ -1372,7 +1377,7 @@ class MinecraftMusicManager {
     }
     
     scheduleNextTrack() {
-        if (!window.gameAudioEnabled) return;
+        if (!window.gameAudioEnabled || !this.audioContext) return;
         
         // Play a track
         this.playProceduralTrack();
