@@ -1178,6 +1178,8 @@ class StatsManager {
                     musicTheme = 'dry';
                 } else if (levelName.includes('underground') || levelName.includes('cave')) {
                     musicTheme = 'cave';
+                } else if (levelName.includes('water') || levelName.includes('aquatic') || levelName.includes('ocean') || levelName.includes('sea')) {
+                    musicTheme = 'aquatic';
                 }
                 
                 // Update music theme if it changed
@@ -1340,6 +1342,21 @@ class MinecraftMusicManager {
                 tempo: 75,
                 volume: 0.13,
                 mood: 'warm'
+            },
+            'aquatic': {
+                key: 'Bb',
+                scale: [233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 440.00], // Bb Major (warmer, more fluid)
+                chords: [
+                    [233.08, 293.66, 349.23], // Bb Major
+                    [261.63, 329.63, 392.00], // C Minor
+                    [293.66, 369.99, 440.00], // D Minor
+                    [311.13, 392.00, 466.16], // Eb Major
+                    [349.23, 440.00, 523.25], // F Major
+                    [392.00, 493.88, 587.33], // G Minor
+                ],
+                tempo: 60, // Slower, more flowing
+                volume: 0.11, // Softer, like sound traveling through water
+                mood: 'aquatic'
             }
         };
     }
@@ -1397,6 +1414,9 @@ class MinecraftMusicManager {
                 break;
             case 'warm':
                 this.playWarmMelody(theme);
+                break;
+            case 'aquatic':
+                this.playAquaticMelody(theme);
                 break;
             default:
                 this.playPeacefulMelody(theme);
@@ -1554,6 +1574,35 @@ class MinecraftMusicManager {
                 this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 3);
             }
             setTimeout(() => this.isPlaying = false, 3000);
+        }, (duration - 3) * 1000);
+    }
+    
+    playAquaticMelody(theme) {
+        const duration = 45 + Math.random() * 30; // 45-75 seconds
+        const beatDuration = 60 / theme.tempo; // Beat duration in seconds
+        
+        // Create main gain node for the track
+        this.musicGain = this.audioContext.createGain();
+        this.musicGain.connect(this.audioContext.destination);
+        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 4);
+        
+        // Play chord progression (harmony)
+        this.playChordProgression(theme, duration, beatDuration);
+        
+        // Play melody over chords (starts after 8 seconds)
+        setTimeout(() => {
+            this.playSimpleMelody(theme, duration - 8, beatDuration);
+        }, 8000);
+        
+        // Fade out and stop
+        setTimeout(() => {
+            if (this.musicGain) {
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 3);
+            }
+            setTimeout(() => {
+                this.isPlaying = false;
+            }, 3000);
         }, (duration - 3) * 1000);
     }
     
