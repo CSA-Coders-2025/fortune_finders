@@ -863,33 +863,39 @@ class StatsManager {
 
     playNotificationSound() {
         // Create a more pleasant notification sound
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        // Play a nice ascending chord
-        const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
-        
-        frequencies.forEach((freq, index) => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
+        try {
+            if (!window.gameAudioEnabled) return;
             
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
             
-            osc.frequency.setValueAtTime(freq, audioContext.currentTime);
-            osc.type = 'sine';
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
             
-            gain.gain.setValueAtTime(0, audioContext.currentTime);
-            gain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1 + index * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5 + index * 0.1);
+            // Play a nice ascending chord
+            const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
             
-            osc.start(audioContext.currentTime + index * 0.1);
-            osc.stop(audioContext.currentTime + 0.5 + index * 0.1);
-        });
+            frequencies.forEach((freq, index) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0, audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1 + index * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5 + index * 0.1);
+                
+                osc.start(audioContext.currentTime + index * 0.1);
+                osc.stop(audioContext.currentTime + 0.5 + index * 0.1);
+            });
+        } catch (e) {
+            console.log("Notification sound error:", e);
+        }
     }
 
     createCookieParticles() {
@@ -1090,6 +1096,8 @@ class StatsManager {
     playConfirmationSound() {
         // Play a brief confirmation beep when audio is enabled
         try {
+            if (!window.gameAudioEnabled) return;
+            
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -1145,23 +1153,33 @@ class StatsManager {
     }
 
     initAmbientSounds() {
-        // Create Minecraft-style music manager
-        this.musicManager = new MinecraftMusicManager();
-        
-        // Start music system
-        this.musicManager.startMusicLoop();
-        
-        // Add UI interaction sounds (keep these)
-        this.addUIInteractionSounds();
-        
-        // Set up environment detection for music themes
-        this.setupMusicEnvironmentDetection();
+        try {
+            // Create Minecraft-style music manager
+            this.musicManager = new MinecraftMusicManager();
+            
+            // Start music system
+            this.musicManager.startMusicLoop();
+            
+            // Add UI interaction sounds (keep these)
+            this.addUIInteractionSounds();
+            
+            // Set up environment detection for music themes
+            this.setupMusicEnvironmentDetection();
+        } catch (e) {
+            console.warn('Failed to initialize ambient sounds:', e);
+            // Create a dummy music manager to prevent errors
+            this.musicManager = {
+                setMusicTheme: () => {},
+                playUIHoverSound: () => {},
+                playUIClickSound: () => {}
+            };
+        }
     }
     
     setupMusicEnvironmentDetection() {
         // Check current level periodically and update music theme
         setInterval(() => {
-            if (this.gameControl && this.gameControl.currentLevel) {
+            if (this.gameControl && this.gameControl.currentLevel && this.musicManager) {
                 const levelName = this.gameControl.currentLevel.constructor.name.toLowerCase();
                 let musicTheme = 'overworld';
                 
@@ -1395,7 +1413,7 @@ class MinecraftMusicManager {
     }
     
     playProceduralTrack() {
-        if (!window.gameAudioEnabled || this.isPlaying) return;
+        if (!window.gameAudioEnabled || this.isPlaying || !this.audioContext) return;
         
         this.isPlaying = true;
         const theme = this.musicThemes[this.currentTheme] || this.musicThemes['overworld'];
@@ -1896,7 +1914,7 @@ class MinecraftMusicManager {
     
     // Keep UI interaction sounds
     playUIHoverSound() {
-        if (!window.gameAudioEnabled) return;
+        if (!window.gameAudioEnabled || !this.audioContext) return;
         
         try {
             const osc = this.audioContext.createOscillator();
@@ -1920,7 +1938,7 @@ class MinecraftMusicManager {
     }
     
     playUIClickSound() {
-        if (!window.gameAudioEnabled) return;
+        if (!window.gameAudioEnabled || !this.audioContext) return;
         
         try {
             const osc = this.audioContext.createOscillator();
