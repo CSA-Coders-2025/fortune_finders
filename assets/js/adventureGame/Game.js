@@ -1606,427 +1606,337 @@ class MinecraftMusicManager {
         // Fade out and stop (longer fade for underwater feel)
         setTimeout(() => {
             if (this.musicGain) {
-            modal.style.opacity = '1';
-            modal.style.transform = 'translate(-50%, -50%) scale(1)';
-        }, 100);
-
-        // Add sound effects
-        const hoverSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-        hoverSound.volume = 0.2;
-
-        // Add hover sound effects to instruction boxes and buttons
-        const elements = modal.querySelectorAll('.instruction-box, .game-button');
-        elements.forEach(element => {
-            element.addEventListener('mouseenter', () => {
-                hoverSound.currentTime = 0;
-                hoverSound.play();
-            });
-        });
-    }
-
-    getNpcCookiesDisplayHTML() {
-        const cookies = this.getAllNpcCookies();
-        if (Object.keys(cookies).length === 0) {
-            return '<span style="color: #999;">No NPC cookies yet! Talk to NPCs to earn cookies.</span>';
-        }
-        
-        return Object.entries(cookies).map(([npcId, reward]) => {
-            const emoji = '✅'; // Consistent emoji since all cookies are now "completed"
-            return `<span style="color: #4CAF50;">${emoji} ${npcId.replace(/-/g, ' ')}: completed</span>`;
-        }).join('<br>');
-    }
-
-    initProgressBar() {
-        // Create progress bar container
-        const progressContainer = document.createElement('div');
-        progressContainer.id = 'game-progress-bar';
-        progressContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 8px;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 9998;
-            border-bottom: 2px solid #333;
-            backdrop-filter: blur(5px);
-        `;
-
-        // Create progress fill
-        const progressFill = document.createElement('div');
-        progressFill.id = 'game-progress-fill';
-        progressFill.style.cssText = `
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
-            background-size: 400% 100%;
-            animation: progressGradient 3s ease infinite;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        `;
-
-        // Create sparkle overlay
-        const sparkleOverlay = document.createElement('div');
-        sparkleOverlay.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-            animation: sparkleMove 2s linear infinite;
-        `;
-
-        // Add progress text
-        const progressText = document.createElement('div');
-        progressText.id = 'game-progress-text';
-        progressText.style.cssText = `
-            position: fixed;
-            top: 15px;
-            left: 20px;
-            color: white;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            z-index: 9999;
-            background: rgba(0,0,0,0.6);
-            padding: 5px 10px;
-            border-radius: 15px;
-            border: 1px solid #333;
-            backdrop-filter: blur(5px);
-        `;
-
-        // Add CSS animations if not present
-        if (!document.getElementById('progress-bar-styles')) {
-            const style = document.createElement('style');
-            style.id = 'progress-bar-styles';
-            style.textContent = `
-                @keyframes progressGradient {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-                
-                @keyframes sparkleMove {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-                
-                @keyframes progressPulse {
-                    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
-                    50% { box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.4); }
-                    100% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        progressFill.appendChild(sparkleOverlay);
-        progressContainer.appendChild(progressFill);
-        document.body.appendChild(progressContainer);
-        document.body.appendChild(progressText);
-
-        // Initialize progress
-        this.updateProgressBar();
-    }
-
-    updateProgressBar() {
-        const progressFill = document.getElementById('game-progress-fill');
-        const progressText = document.getElementById('game-progress-text');
-        
-        if (!progressFill || !progressText) return;
-
-        // Define the main waypoint NPCs (should match WaypointArrow.js)
-        const waypointNpcs = [
-            'Stock-NPC',
-            'Casino-NPC', 
-            'Fidelity',
-            'Schwab',
-            'Crypto-NPC',
-            'Bank-NPC',
-            'Market Computer'
-        ];
-
-        // Calculate progress based on waypoint NPC cookies only
-        const totalNpcs = waypointNpcs.length; // 7 NPCs
-        const npcCookies = this.getAllNpcCookies();
-        
-        // Count only waypoint NPCs that have at least one cookie
-        const completedNpcs = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
-        const progressPercentage = (completedNpcs / totalNpcs) * 100;
-
-        // Update progress bar
-        progressFill.style.width = `${progressPercentage}%`;
-        
-        // Update text
-        progressText.textContent = `Progress: ${completedNpcs}/${totalNpcs} NPCs (${Math.round(progressPercentage)}%)`;
-
-        // Add pulse effect when progress increases
-        if (progressPercentage > 0) {
-            progressFill.style.animation = 'progressGradient 3s ease infinite, progressPulse 1s ease-out';
-            setTimeout(() => {
-                progressFill.style.animation = 'progressGradient 3s ease infinite';
-            }, 1000);
-        }
-
-        // Special effect when completed
-        if (completedNpcs === totalNpcs) {
-            progressText.textContent = '🎉 QUEST COMPLETE! 🎉';
-            progressText.style.color = '#ffd700';
-            progressFill.style.background = 'linear-gradient(90deg, #ffd700, #ffeb3b, #ffd700)';
-            this.showCompletionCelebration();
-        }
-    }
-
-    showCompletionCelebration() {
-        // Create massive celebration effect
-        for (let i = 0; i < 50; i++) {
-            setTimeout(() => {
-                this.createCelebrationFirework();
-            }, i * 100);
-        }
-    }
-
-    createCelebrationFirework() {
-        const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
-        const particles = [];
-        const particleCount = 20;
-        
-        // Random position on screen
-        const x = Math.random() * window.innerWidth;
-        const y = Math.random() * window.innerHeight * 0.6; // Upper part of screen
-        
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.style.cssText = `
-                position: fixed;
-                left: ${x}px;
-                top: ${y}px;
-                width: 8px;
-                height: 8px;
-                background: ${colors[Math.floor(Math.random() * colors.length)]};
-                border-radius: 50%;
-                pointer-events: none;
-                z-index: 10001;
-                box-shadow: 0 0 10px currentColor;
-            `;
-            
-            document.body.appendChild(particle);
-            particles.push(particle);
-            
-            // Animate particle
-            const angle = (Math.PI * 2 * i) / particleCount;
-            const distance = 100 + Math.random() * 150;
-            const deltaX = Math.cos(angle) * distance;
-            const deltaY = Math.sin(angle) * distance;
-            
-            particle.animate([
-                {
-                    transform: 'translate(-50%, -50%) scale(0)',
-                    opacity: 1
-                },
-                {
-                    transform: 'translate(-50%, -50%) scale(1)',
-                    opacity: 1,
-                    offset: 0.1
-                },
-                {
-                    transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0.5)`,
-                    opacity: 0.5,
-                    offset: 0.8
-                },
-                {
-                    transform: `translate(calc(-50% + ${deltaX * 1.2}px), calc(-50% + ${deltaY * 1.2}px)) scale(0)`,
-                    opacity: 0
-                }
-            ], {
-                duration: 2000 + Math.random() * 1000,
-                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-            });
-        }
-        
-        // Clean up particles
-        setTimeout(() => {
-            particles.forEach(particle => {
-                if (particle.parentNode) {
-                    particle.parentNode.removeChild(particle);
-                }
-            });
-        }, 3000);
-    }
-
-    initAudioToggle() {
-        // Check for existing audio preference
-        const isAudioEnabled = localStorage.getItem('gameAudioEnabled') !== 'false';
-        
-        // Create audio toggle button container
-        const audioToggleContainer = document.createElement('div');
-        audioToggleContainer.id = 'audio-toggle-container';
-        audioToggleContainer.style.cssText = `
-            position: fixed;
-            top: 120px;
-            left: 20px;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        `;
-        
-        // Create the toggle button
-        const audioButton = document.createElement('button');
-        audioButton.id = 'audio-toggle-button';
-        audioButton.innerHTML = isAudioEnabled ? '🔊' : '🔇';
-        audioButton.title = isAudioEnabled ? 'Click to mute audio' : 'Click to enable audio';
-        audioButton.style.cssText = `
-            background: #000;
-            border: 2px solid #fff;
-            color: #fff;
-            padding: 12px 15px;
-            cursor: pointer;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 18px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-            animation: glowBorder 2s infinite alternate;
-        `;
-        
-        // Add label
-        const audioLabel = document.createElement('span');
-        audioLabel.style.cssText = `
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            opacity: 0.8;
-        `;
-        audioLabel.textContent = isAudioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
-        
-        // Add click functionality
-        audioButton.addEventListener('click', () => {
-            const currentState = localStorage.getItem('gameAudioEnabled') !== 'false';
-            const newState = !currentState;
-            
-            // Update localStorage
-            localStorage.setItem('gameAudioEnabled', newState.toString());
-            
-            // Update button appearance
-            audioButton.innerHTML = newState ? '🔊' : '🔇';
-            audioButton.title = newState ? 'Click to mute audio' : 'Click to enable audio';
-            audioLabel.textContent = newState ? 'AUDIO ON' : 'AUDIO OFF';
-            
-            // Update global audio state
-            window.gameAudioEnabled = newState;
-            
-            // Play a confirmation sound if audio is being enabled
-            if (newState) {
-                this.playConfirmationSound();
+                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 5);
             }
-            
-            // Show brief feedback
-            this.showAudioToggleFeedback(newState);
-        });
-        
-        // Add hover effects
-        audioButton.addEventListener('mouseenter', () => {
-            audioButton.style.transform = 'scale(1.05)';
-            audioButton.style.borderColor = '#ffd700';
-            audioButton.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
-        });
-        
-        audioButton.addEventListener('mouseleave', () => {
-            audioButton.style.transform = 'scale(1)';
-            audioButton.style.borderColor = '#fff';
-            audioButton.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
-        });
-        
-        // Assemble and add to page
-        audioToggleContainer.appendChild(audioButton);
-        audioToggleContainer.appendChild(audioLabel);
-        document.body.appendChild(audioToggleContainer);
-        
-        // Set global audio state
-        window.gameAudioEnabled = isAudioEnabled;
-        
-        // Add CSS for animations if not present
-        if (!document.getElementById('audio-toggle-styles')) {
-            const style = document.createElement('style');
-            style.id = 'audio-toggle-styles';
-            style.textContent = `
-                @keyframes audioFeedback {
-                    0% { transform: scale(1) rotate(0deg); }
-                    25% { transform: scale(1.1) rotate(-5deg); }
-                    50% { transform: scale(1.2) rotate(5deg); }
-                    75% { transform: scale(1.1) rotate(-2deg); }
-                    100% { transform: scale(1) rotate(0deg); }
-                }
-                
-                .audio-feedback {
-                    animation: audioFeedback 0.5s ease-out;
-                }
-            `;
-            document.head.appendChild(style);
-        }
+            setTimeout(() => {
+                this.isPlaying = false;
+            }, 5000);
+        }, (duration - 5) * 1000);
     }
     
-    playConfirmationSound() {
-        // Play a brief confirmation beep when audio is enabled
+    playAquaticAmbience(theme, duration) {
+        if (!this.musicGain) return;
+        
+        // Create low-frequency underwater ambience
+        const ambientOsc = this.audioContext.createOscillator();
+        const ambientGain = this.audioContext.createGain();
+        const ambientFilter = this.audioContext.createBiquadFilter();
+        
+        ambientOsc.connect(ambientFilter);
+        ambientFilter.connect(ambientGain);
+        ambientGain.connect(this.musicGain);
+        
+        ambientOsc.type = 'sine';
+        ambientOsc.frequency.setValueAtTime(40, this.audioContext.currentTime); // Very low bass
+        
+        ambientFilter.type = 'lowpass';
+        ambientFilter.frequency.setValueAtTime(150, this.audioContext.currentTime);
+        
+        ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        ambientGain.gain.linearRampToValueAtTime(theme.volume * 0.2, this.audioContext.currentTime + 8);
+        ambientGain.gain.linearRampToValueAtTime(theme.volume * 0.15, this.audioContext.currentTime + duration - 8);
+        ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        ambientOsc.start(this.audioContext.currentTime);
+        ambientOsc.stop(this.audioContext.currentTime + duration);
+    }
+    
+    playFlowingAquaticMelody(theme, duration, beatDuration) {
+        const scale = theme.scale;
+        let noteIndex = 2; // Start from middle of scale
+        const noteDuration = beatDuration * 1.5; // Longer, more flowing notes
+        
+        const playNote = () => {
+            if (!this.musicGain) return;
+            
+            // More gentle, flowing movement through the scale
+            const direction = Math.random() > 0.6 ? (Math.random() > 0.5 ? 1 : -1) : 0;
+            noteIndex = Math.max(0, Math.min(scale.length - 1, noteIndex + direction));
+            
+            const frequency = scale[noteIndex];
+            
+            this.createAquaticMelodyNote(frequency, noteDuration, theme.volume * 0.3);
+            
+            // More spacing between notes for dreamy effect
+            const nextDelay = noteDuration * 1.5 + Math.random() * noteDuration;
+            
+            if (nextDelay / 1000 < duration) {
+                setTimeout(playNote, nextDelay * 1000);
+                duration -= nextDelay;
+            }
+        };
+        
+        playNote();
+    }
+    
+    createAquaticMelodyNote(frequency, duration, volume) {
+        if (!this.musicGain) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+        
+        osc.type = 'sine'; // Pure sine waves for underwater effect
+        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        
+        // Low-pass filter to simulate underwater muffling
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.3); // Slow attack
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + duration);
+    }
+    
+    playBubbleEffects(theme, duration) {
+        if (!this.musicGain) return;
+        
+        const playBubble = () => {
+            const bubbleOsc = this.audioContext.createOscillator();
+            const bubbleGain = this.audioContext.createGain();
+            
+            bubbleOsc.connect(bubbleGain);
+            bubbleGain.connect(this.musicGain);
+            
+            // High frequency for bubble-like sound
+            const frequency = 800 + Math.random() * 1200;
+            bubbleOsc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            bubbleOsc.type = 'sine';
+            
+            bubbleGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            bubbleGain.gain.linearRampToValueAtTime(theme.volume * 0.1, this.audioContext.currentTime + 0.05);
+            bubbleGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+            
+            bubbleOsc.start(this.audioContext.currentTime);
+            bubbleOsc.stop(this.audioContext.currentTime + 0.3);
+        };
+        
+        // Play random bubbles throughout the duration
+        const bubbleInterval = setInterval(() => {
+            if (Math.random() > 0.7) { // 30% chance of bubble
+                playBubble();
+            }
+        }, 2000);
+        
+        setTimeout(() => {
+            clearInterval(bubbleInterval);
+        }, duration * 1000);
+    }
+    
+    playChordProgression(theme, duration, beatDuration, style = 'normal') {
+        const chords = theme.chords;
+        let chordIndex = 0;
+        const chordDuration = beatDuration * 4; // Each chord lasts 4 beats
+        
+        const playChord = () => {
+            if (!this.musicGain) return;
+            
+            const chord = chords[chordIndex % chords.length];
+            
+            chord.forEach((freq, noteIndex) => {
+                setTimeout(() => {
+                    this.createChordNote(freq, chordDuration, theme.volume * 0.3, style);
+                }, noteIndex * 50); // Slight delay for each note in chord
+            });
+            
+            chordIndex++;
+            
+            if (chordIndex * chordDuration < duration) {
+                setTimeout(playChord, chordDuration * 1000);
+            }
+        };
+        
+        playChord();
+    }
+    
+    createChordNote(frequency, duration, volume, style) {
+        if (!this.musicGain) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+        
+        // Different waveforms for different styles
+        switch (style) {
+            case 'warm':
+                osc.type = 'sawtooth';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                break;
+            case 'mysterious':
+                osc.type = 'triangle';
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                break;
+            case 'energetic':
+                osc.type = 'square';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+                break;
+            case 'aquatic':
+                osc.type = 'sine';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(500, this.audioContext.currentTime); // Muffled underwater sound
+                break;
+            default:
+                osc.type = 'sine';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, this.audioContext.currentTime);
+        }
+        
+        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.1);
+        gain.gain.linearRampToValueAtTime(volume * 0.7, this.audioContext.currentTime + duration - 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + duration);
+    }
+    
+    playSimpleMelody(theme, duration, beatDuration) {
+        const scale = theme.scale;
+        let noteIndex = 0;
+        const noteDuration = beatDuration / 2; // Eighth notes
+        
+        const playNote = () => {
+            if (!this.musicGain) return;
+            
+            // Simple melody pattern - mostly steps with occasional jumps
+            const direction = Math.random() > 0.7 ? (Math.random() > 0.5 ? 2 : -2) : (Math.random() > 0.5 ? 1 : -1);
+            noteIndex = Math.max(0, Math.min(scale.length - 1, noteIndex + direction));
+            
+            const frequency = scale[noteIndex] * (Math.random() > 0.8 ? 2 : 1); // Occasional octave jump
+            
+            this.createMelodyNote(frequency, noteDuration, theme.volume * 0.4);
+            
+            // Sometimes skip a beat for musical breathing
+            const nextDelay = Math.random() > 0.8 ? noteDuration * 3 : noteDuration * 2;
+            
+            if (nextDelay / 1000 < duration) {
+                setTimeout(playNote, nextDelay * 1000);
+                duration -= nextDelay;
+            }
+        };
+        
+        playNote();
+    }
+    
+    createMelodyNote(frequency, duration, volume) {
+        if (!this.musicGain) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + duration);
+    }
+    
+    // Additional melody methods for different styles
+    playArpeggioMelody(theme, duration, beatDuration) {
+        this.playSimpleMelody(theme, duration, beatDuration / 2);
+    }
+    
+    playSparseMelody(theme, duration, beatDuration) {
+        this.playSimpleMelody(theme, duration, beatDuration * 3);
+    }
+    
+    playHauntingMelody(theme, duration, beatDuration) {
+        this.playSimpleMelody(theme, duration, beatDuration * 1.5);
+    }
+    
+    playPadChords(theme, duration, beatDuration) {
+        this.playChordProgression(theme, duration, beatDuration * 2, 'warm');
+    }
+    
+    playDarkChords(theme, duration, beatDuration) {
+        this.playChordProgression(theme, duration, beatDuration, 'mysterious');
+    }
+    
+    playEerieHighMelody(theme, duration, beatDuration) {
+        const scale = theme.scale.map(freq => freq * 2); // Octave higher
+        this.playSimpleMelody({...theme, scale}, duration, beatDuration * 2);
+    }
+    
+    playFlowingMelody(theme, duration, beatDuration) {
+        this.playSimpleMelody(theme, duration, beatDuration);
+    }
+    
+    // Keep UI interaction sounds
+    playUIHoverSound() {
+        if (!window.gameAudioEnabled) return;
+        
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
             
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
             
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
-            oscillator.type = 'sine';
+            osc.frequency.setValueAtTime(800 + Math.random() * 200, this.audioContext.currentTime);
+            osc.type = 'sine';
             
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, this.audioContext.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
             
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 0.1);
         } catch (e) {
-            console.log("Confirmation sound error:", e);
+            console.log("UI hover sound error:", e);
         }
     }
     
-    showAudioToggleFeedback(isEnabled) {
-        // Show visual feedback when audio is toggled
-        const feedback = document.createElement('div');
-        feedback.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: ${isEnabled ? '#4CAF50' : '#f44336'};
-            padding: 20px 30px;
-            border: 2px solid ${isEnabled ? '#4CAF50' : '#f44336'};
-            border-radius: 8px;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
-            z-index: 10001;
-            pointer-events: none;
-            animation: audioFeedback 0.5s ease-out;
-            box-shadow: 0 0 20px rgba(${isEnabled ? '76, 175, 80' : '244, 67, 54'}, 0.5);
-        `;
-        feedback.textContent = isEnabled ? '🔊 AUDIO ENABLED' : '🔇 AUDIO DISABLED';
+    playUIClickSound() {
+        if (!window.gameAudioEnabled) return;
         
-        document.body.appendChild(feedback);
-        
-        // Remove feedback after animation
-        setTimeout(() => {
-            if (feedback.parentNode) {
-                feedback.parentNode.removeChild(feedback);
-            }
-        }, 1000);
+        try {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+            
+            osc.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.05);
+            osc.type = 'square';
+            
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.02, this.audioContext.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
+            
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 0.08);
+        } catch (e) {
+            console.log("UI click sound error:", e);
+        }
     }
 }
 
