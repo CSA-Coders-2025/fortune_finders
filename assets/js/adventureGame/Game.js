@@ -1963,4 +1963,154 @@ class MinecraftMusicManager {
     }
 }
 
+class InventoryManager {
+    constructor(game) {
+        this.game = game;
+        this.inventory = Inventory.getInstance();
+    }
+
+    giveItem(itemId, quantity = 1) {
+        const item = defaultItems[itemId];
+        if (!item) {
+            console.error(`Item ${itemId} not found in defaultItems`);
+            return false;
+        }
+
+        const itemToAdd = {
+            ...item,
+            quantity: quantity
+        };
+
+        return this.inventory.addItem(itemToAdd);
+    }
+
+    removeItem(itemId, quantity = 1) {
+        return this.inventory.removeItem(itemId, quantity);
+    }
+
+    hasItem(itemId) {
+        return this.inventory.items.some(item => item.id === itemId);
+    }
+
+    getItemQuantity(itemId) {
+        const item = this.inventory.items.find(item => item.id === itemId);
+        return item ? item.quantity : 0;
+    }
+
+    giveStartingItems() {
+        this.giveItem('stock_certificate', 5);
+        this.giveItem('bond', 3);
+        this.giveItem('trading_boost', 2);
+        this.giveItem('speed_boost', 2);
+        this.giveItem('calculator', 1);
+        this.giveItem('market_scanner', 1);
+        this.giveItem('rare_coin', 1);
+        this.giveItem('trading_manual', 1);
+        this.giveItem('roi_calculator', 1);
+    }
+}
+
+class QuizManager {
+    constructor(game) {
+        this.game = game;
+    }
+
+    async fetchQuestionByCategory(category) {
+        try {
+            const personId = this.game.id;
+            const response = await fetch(
+                `${this.game.javaURI}/rpg_answer/getQuestion?category=${category}&personid=${personId}`, 
+                this.game.fetchOptions
+            );
+    
+            if (!response.ok) throw new Error("Failed to fetch questions");
+            const questions = await response.json();
+            return questions;
+        } catch (error) {
+            console.error("Error fetching question by category:", error);
+            return null;
+        }
+    }
+    
+    async attemptQuizForNpc(npcCategory, callback = null) {
+        try {
+            const response = await this.fetchQuestionByCategory(npcCategory);
+            const allQuestions = response?.questions || [];
+    
+            if (allQuestions.length === 0) {
+                alert(`✅ You've already completed all of ${npcCategory}'s questions!`);
+                return;
+            }
+    
+            const quiz = new Quiz();
+            quiz.initialize();
+            quiz.openPanel(npcCategory, callback, allQuestions);
+        } catch (error) {
+            console.error("Error during NPC quiz attempt:", error);
+            alert("⚠️ There was a problem loading the quiz. Please try again.");
+        }
+    }
+}
+
+class Game {
+    constructor(environment) {
+        this.environment = environment;
+        this.path = environment.path;
+        this.gameContainer = environment.gameContainer;
+        this.gameCanvas = environment.gameCanvas;
+        this.pythonURI = environment.pythonURI;
+        this.javaURI = environment.javaURI;
+        this.fetchOptions = environment.fetchOptions;
+        this.uid = null;
+        this.id = null;
+        this.gname = null;
+
+        this.statsManager = new StatsManager(this);
+        this.inventoryManager = new InventoryManager(this);
+        this.quizManager = new QuizManager(this);
+        
+        this.initUser();
+        this.inventoryManager.giveStartingItems();
+        this.initProgressBar();
+        this.showGameInstructions();
+        
+        // Add keyboard event listener for 'H' key
+        document.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'h') {
+                this.showGameInstructions();
+            }
+        });
+        
+        const gameLevelClasses = environment.gameLevelClasses;
+        this.gameControl = new GameControl(this, gameLevelClasses);
+        this.gameControl.start();
+    }
+
+    static main(environment) {
+        return new Game(environment);
+    }
+
+    initUser() {
+        const pythonURL = this.pythonURI + '/api/id';
+        fetch(pythonURL, this.fetchOptions)
+            .then(response => {
+                if (response.status !== 200) {
+                    console.error("HTTP status code: " + response.status);
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return;
+                this.uid = data.uid;
+
+                const javaURL = this.javaURI + '/rpg_answer/person/' + this.uid;
+                return fetch(javaURL, this.fetchOptions);
+            })
+            .then(response => {
+                if (!response || !response.ok) {
+                    throw new Error(`Spring server response: ${response?.status}`);
+                }
+                return response.json();
+            })
 export default Game;
