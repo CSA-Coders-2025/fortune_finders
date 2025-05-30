@@ -1982,7 +1982,7 @@ class Game {
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
-            top: 50%;
+            top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: #000;
