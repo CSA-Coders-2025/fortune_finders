@@ -863,39 +863,33 @@ class StatsManager {
 
     playNotificationSound() {
         // Create a more pleasant notification sound
-        try {
-            if (!window.gameAudioEnabled) return;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Play a nice ascending chord
+        const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
+        
+        frequencies.forEach((freq, index) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
             
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
             
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+            osc.type = 'sine';
             
-            // Play a nice ascending chord
-            const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
+            gain.gain.setValueAtTime(0, audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1 + index * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5 + index * 0.1);
             
-            frequencies.forEach((freq, index) => {
-                const osc = audioContext.createOscillator();
-                const gain = audioContext.createGain();
-                
-                osc.connect(gain);
-                gain.connect(audioContext.destination);
-                
-                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
-                osc.type = 'sine';
-                
-                gain.gain.setValueAtTime(0, audioContext.currentTime);
-                gain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1 + index * 0.1);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5 + index * 0.1);
-                
-                osc.start(audioContext.currentTime + index * 0.1);
-                osc.stop(audioContext.currentTime + 0.5 + index * 0.1);
-            });
-        } catch (e) {
-            console.log("Notification sound error:", e);
-        }
+            osc.start(audioContext.currentTime + index * 0.1);
+            osc.stop(audioContext.currentTime + 0.5 + index * 0.1);
+        });
     }
 
     createCookieParticles() {
@@ -1096,8 +1090,6 @@ class StatsManager {
     playConfirmationSound() {
         // Play a brief confirmation beep when audio is enabled
         try {
-            if (!window.gameAudioEnabled) return;
-            
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -1153,33 +1145,23 @@ class StatsManager {
     }
 
     initAmbientSounds() {
-        try {
-            // Create Minecraft-style music manager
-            this.musicManager = new MinecraftMusicManager();
-            
-            // Start music system
-            this.musicManager.startMusicLoop();
-            
-            // Add UI interaction sounds (keep these)
-            this.addUIInteractionSounds();
-            
-            // Set up environment detection for music themes
-            this.setupMusicEnvironmentDetection();
-        } catch (e) {
-            console.warn('Failed to initialize ambient sounds:', e);
-            // Create a dummy music manager to prevent errors
-            this.musicManager = {
-                setMusicTheme: () => {},
-                playUIHoverSound: () => {},
-                playUIClickSound: () => {}
-            };
-        }
+        // Create Minecraft-style music manager
+        this.musicManager = new MinecraftMusicManager();
+        
+        // Start music system
+        this.musicManager.startMusicLoop();
+        
+        // Add UI interaction sounds (keep these)
+        this.addUIInteractionSounds();
+        
+        // Set up environment detection for music themes
+        this.setupMusicEnvironmentDetection();
     }
     
     setupMusicEnvironmentDetection() {
         // Check current level periodically and update music theme
         setInterval(() => {
-            if (this.gameControl && this.gameControl.currentLevel && this.musicManager) {
+            if (this.gameControl && this.gameControl.currentLevel) {
                 const levelName = this.gameControl.currentLevel.constructor.name.toLowerCase();
                 let musicTheme = 'overworld';
                 
@@ -1196,8 +1178,6 @@ class StatsManager {
                     musicTheme = 'dry';
                 } else if (levelName.includes('underground') || levelName.includes('cave')) {
                     musicTheme = 'cave';
-                } else if (levelName.includes('water') || levelName.includes('aquatic') || levelName.includes('ocean') || levelName.includes('sea')) {
-                    musicTheme = 'aquatic';
                 }
                 
                 // Update music theme if it changed
@@ -1266,12 +1246,7 @@ class StatsManager {
 // Minecraft-Style Music Manager Class
 class MinecraftMusicManager {
     constructor() {
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.warn('Audio context not available:', e);
-            this.audioContext = null;
-        }
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.isPlaying = false;
         this.currentTheme = 'overworld';
         this.musicGain = null;
@@ -1365,27 +1340,12 @@ class MinecraftMusicManager {
                 tempo: 75,
                 volume: 0.13,
                 mood: 'warm'
-            },
-            'aquatic': {
-                key: 'Bb',
-                scale: [233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 440.00], // Bb Major (warmer, more fluid)
-                chords: [
-                    [233.08, 293.66, 349.23], // Bb Major
-                    [261.63, 329.63, 392.00], // C Minor
-                    [293.66, 369.99, 440.00], // D Minor
-                    [311.13, 392.00, 466.16], // Eb Major
-                    [349.23, 440.00, 523.25], // F Major
-                    [392.00, 493.88, 587.33], // G Minor
-                ],
-                tempo: 60, // Slower, more flowing
-                volume: 0.11, // Softer, like sound traveling through water
-                mood: 'aquatic'
             }
         };
     }
     
     startMusicLoop() {
-        if (!window.gameAudioEnabled || !this.audioContext) return;
+        if (!window.gameAudioEnabled) return;
         
         // Schedule first track after 30-90 seconds (like Minecraft)
         const initialDelay = 30000 + Math.random() * 60000;
@@ -1395,7 +1355,7 @@ class MinecraftMusicManager {
     }
     
     scheduleNextTrack() {
-        if (!window.gameAudioEnabled || !this.audioContext) return;
+        if (!window.gameAudioEnabled) return;
         
         // Play a track
         this.playProceduralTrack();
@@ -1413,7 +1373,7 @@ class MinecraftMusicManager {
     }
     
     playProceduralTrack() {
-        if (!window.gameAudioEnabled || this.isPlaying || !this.audioContext) return;
+        if (!window.gameAudioEnabled || this.isPlaying) return;
         
         this.isPlaying = true;
         const theme = this.musicThemes[this.currentTheme] || this.musicThemes['overworld'];
@@ -1437,9 +1397,6 @@ class MinecraftMusicManager {
                 break;
             case 'warm':
                 this.playWarmMelody(theme);
-                break;
-            case 'aquatic':
-                this.playAquaticMelody(theme);
                 break;
             default:
                 this.playPeacefulMelody(theme);
@@ -1600,159 +1557,6 @@ class MinecraftMusicManager {
         }, (duration - 3) * 1000);
     }
     
-    playAquaticMelody(theme) {
-        const duration = 50 + Math.random() * 40; // 50-90 seconds (longer, more immersive)
-        const beatDuration = 60 / theme.tempo; // Beat duration in seconds
-        
-        // Create main gain node for the track
-        this.musicGain = this.audioContext.createGain();
-        this.musicGain.connect(this.audioContext.destination);
-        this.musicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        this.musicGain.gain.linearRampToValueAtTime(theme.volume, this.audioContext.currentTime + 6); // Slower fade in
-        
-        // Play flowing underwater chord progression
-        this.playChordProgression(theme, duration, beatDuration * 1.5, 'aquatic'); // Slower, more sustained chords
-        
-        // Add underwater ambience (subtle bass drone)
-        this.playAquaticAmbience(theme, duration);
-        
-        // Play flowing melody (starts after 10 seconds for more atmospheric buildup)
-        setTimeout(() => {
-            this.playFlowingAquaticMelody(theme, duration - 12, beatDuration);
-        }, 10000);
-        
-        // Add occasional bubble-like high notes
-        setTimeout(() => {
-            this.playBubbleEffects(theme, duration - 15);
-        }, 15000);
-        
-        // Fade out and stop (longer fade for underwater feel)
-        setTimeout(() => {
-            if (this.musicGain) {
-                this.musicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 5);
-            }
-            setTimeout(() => {
-                this.isPlaying = false;
-            }, 5000);
-        }, (duration - 5) * 1000);
-    }
-    
-    playAquaticAmbience(theme, duration) {
-        if (!this.musicGain) return;
-        
-        // Create low-frequency underwater ambience
-        const ambientOsc = this.audioContext.createOscillator();
-        const ambientGain = this.audioContext.createGain();
-        const ambientFilter = this.audioContext.createBiquadFilter();
-        
-        ambientOsc.connect(ambientFilter);
-        ambientFilter.connect(ambientGain);
-        ambientGain.connect(this.musicGain);
-        
-        ambientOsc.type = 'sine';
-        ambientOsc.frequency.setValueAtTime(40, this.audioContext.currentTime); // Very low bass
-        
-        ambientFilter.type = 'lowpass';
-        ambientFilter.frequency.setValueAtTime(150, this.audioContext.currentTime);
-        
-        ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        ambientGain.gain.linearRampToValueAtTime(theme.volume * 0.2, this.audioContext.currentTime + 8);
-        ambientGain.gain.linearRampToValueAtTime(theme.volume * 0.15, this.audioContext.currentTime + duration - 8);
-        ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
-        
-        ambientOsc.start(this.audioContext.currentTime);
-        ambientOsc.stop(this.audioContext.currentTime + duration);
-    }
-    
-    playFlowingAquaticMelody(theme, duration, beatDuration) {
-        const scale = theme.scale;
-        let noteIndex = 2; // Start from middle of scale
-        const noteDuration = beatDuration * 1.5; // Longer, more flowing notes
-        
-        const playNote = () => {
-            if (!this.musicGain) return;
-            
-            // More gentle, flowing movement through the scale
-            const direction = Math.random() > 0.6 ? (Math.random() > 0.5 ? 1 : -1) : 0;
-            noteIndex = Math.max(0, Math.min(scale.length - 1, noteIndex + direction));
-            
-            const frequency = scale[noteIndex];
-            
-            this.createAquaticMelodyNote(frequency, noteDuration, theme.volume * 0.3);
-            
-            // More spacing between notes for dreamy effect
-            const nextDelay = noteDuration * 1.5 + Math.random() * noteDuration;
-            
-            if (nextDelay / 1000 < duration) {
-                setTimeout(playNote, nextDelay * 1000);
-                duration -= nextDelay;
-            }
-        };
-        
-        playNote();
-    }
-    
-    createAquaticMelodyNote(frequency, duration, volume) {
-        if (!this.musicGain) return;
-        
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.musicGain);
-        
-        osc.type = 'sine'; // Pure sine waves for underwater effect
-        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-        
-        // Low-pass filter to simulate underwater muffling
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.3); // Slow attack
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + duration);
-    }
-    
-    playBubbleEffects(theme, duration) {
-        if (!this.musicGain) return;
-        
-        const playBubble = () => {
-            const bubbleOsc = this.audioContext.createOscillator();
-            const bubbleGain = this.audioContext.createGain();
-            
-            bubbleOsc.connect(bubbleGain);
-            bubbleGain.connect(this.musicGain);
-            
-            // High frequency for bubble-like sound
-            const frequency = 800 + Math.random() * 1200;
-            bubbleOsc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-            bubbleOsc.type = 'sine';
-            
-            bubbleGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-            bubbleGain.gain.linearRampToValueAtTime(theme.volume * 0.1, this.audioContext.currentTime + 0.05);
-            bubbleGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
-            
-            bubbleOsc.start(this.audioContext.currentTime);
-            bubbleOsc.stop(this.audioContext.currentTime + 0.3);
-        };
-        
-        // Play random bubbles throughout the duration
-        const bubbleInterval = setInterval(() => {
-            if (Math.random() > 0.7) { // 30% chance of bubble
-                playBubble();
-            }
-        }, 2000);
-        
-        setTimeout(() => {
-            clearInterval(bubbleInterval);
-        }, duration * 1000);
-    }
-    
     playChordProgression(theme, duration, beatDuration, style = 'normal') {
         const chords = theme.chords;
         let chordIndex = 0;
@@ -1806,11 +1610,6 @@ class MinecraftMusicManager {
                 osc.type = 'square';
                 filter.type = 'lowpass';
                 filter.frequency.setValueAtTime(1200, this.audioContext.currentTime);
-                break;
-            case 'aquatic':
-                osc.type = 'sine';
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(500, this.audioContext.currentTime); // Muffled underwater sound
                 break;
             default:
                 osc.type = 'sine';
@@ -1882,39 +1681,46 @@ class MinecraftMusicManager {
         osc.stop(this.audioContext.currentTime + duration);
     }
     
-    // Additional melody methods for different styles
+    // Additional melody methods for different styles (simplified versions)
     playArpeggioMelody(theme, duration, beatDuration) {
+        // Implementation for arpeggio-style melody
         this.playSimpleMelody(theme, duration, beatDuration / 2);
     }
     
     playSparseMelody(theme, duration, beatDuration) {
+        // Very slow, sparse melody
         this.playSimpleMelody(theme, duration, beatDuration * 3);
     }
     
     playHauntingMelody(theme, duration, beatDuration) {
+        // Mysterious melody with longer notes
         this.playSimpleMelody(theme, duration, beatDuration * 1.5);
     }
     
     playPadChords(theme, duration, beatDuration) {
+        // Sustained pad-like chords
         this.playChordProgression(theme, duration, beatDuration * 2, 'warm');
     }
     
     playDarkChords(theme, duration, beatDuration) {
+        // Dark, low chords
         this.playChordProgression(theme, duration, beatDuration, 'mysterious');
     }
     
     playEerieHighMelody(theme, duration, beatDuration) {
+        // High, eerie melody
         const scale = theme.scale.map(freq => freq * 2); // Octave higher
         this.playSimpleMelody({...theme, scale}, duration, beatDuration * 2);
     }
     
     playFlowingMelody(theme, duration, beatDuration) {
+        // Smooth, flowing melody
         this.playSimpleMelody(theme, duration, beatDuration);
     }
     
     // Keep UI interaction sounds
     playUIHoverSound() {
-        if (!window.gameAudioEnabled || !this.audioContext) return;
+        if (!window.gameAudioEnabled) return;
         
         try {
             const osc = this.audioContext.createOscillator();
@@ -1938,7 +1744,7 @@ class MinecraftMusicManager {
     }
     
     playUIClickSound() {
-        if (!window.gameAudioEnabled || !this.audioContext) return;
+        if (!window.gameAudioEnabled) return;
         
         try {
             const osc = this.audioContext.createOscillator();
@@ -2113,4 +1919,690 @@ class Game {
                 }
                 return response.json();
             })
+            .then(data => {
+                if (!data) return;
+                this.id = data.id;
+                this.statsManager.fetchStats(data.id);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+    }
+
+    giveItem(itemId, quantity = 1) {
+        return this.inventoryManager.giveItem(itemId, quantity);
+    }
+
+    removeItem(itemId, quantity = 1) {
+        return this.inventoryManager.removeItem(itemId, quantity);
+    }
+
+    hasItem(itemId) {
+        return this.inventoryManager.hasItem(itemId);
+    }
+
+    getItemQuantity(itemId) {
+        return this.inventoryManager.getItemQuantity(itemId);
+    }
+
+    attemptQuizForNpc(npcCategory, callback = null) {
+        return this.quizManager.attemptQuizForNpc(npcCategory, callback);
+    }
+
+    // === NPC Cookie Methods ===
+    
+    /**
+     * Give a cookie to the user for completing an NPC interaction
+     * @param {string} npcId - The ID of the NPC
+     * @param {string} reward - The reward/cookie value (optional)
+     * @param {string} objective - The new objective to show (optional)
+     */
+    giveNpcCookie(npcId, reward = "completed", objective = null) {
+        return this.statsManager.giveNpcCookie(npcId, reward, objective);
+    }
+
+    /**
+     * Check if user has a specific NPC cookie
+     * @param {string} npcId - The ID of the NPC
+     * @returns {string|null} - The cookie value if exists, null otherwise
+     */
+    getNpcCookie(npcId) {
+        return this.statsManager.getNpcCookie(npcId);
+    }
+
+    /**
+     * Get all NPC cookies
+     * @returns {Object} - Object with npcId as key and cookie value as value
+     */
+    getAllNpcCookies() {
+        return this.statsManager.getAllNpcCookies();
+    }
+
+    showGameInstructions() {
+        // Create modal container
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            padding: 25px;
+            border: 4px solid #fff;
+            color: white;
+            z-index: 10000;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            animation: glowBorder 2s infinite alternate;
+            position: relative;
+            overflow: hidden;
+        `;
+
+        // Add content
+        modal.innerHTML = `
+            <style>
+                @keyframes glowBorder {
+                    0% { box-shadow: 0 0 5px #fff, inset 0 0 5px #fff; }
+                    100% { box-shadow: 0 0 15px #fff, inset 0 0 8px #fff; }
+                }
+                @keyframes scanline {
+                    0% { transform: translateY(-100%); }
+                    100% { transform: translateY(100%); }
+                }
+                @keyframes shine {
+                    0% { left: -100%; }
+                    100% { left: 100%; }
+                }
+                .instruction-box {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 2px solid #ffb300;
+                    margin: 8px 0;
+                    padding: 12px;
+                    display: flex;
+                    align-items: center;
+                    font-size: 0.7em;
+                    position: relative;
+                    overflow: hidden;
+                    transition: all 0.3s;
+                }
+                .instruction-box:hover {
+                    transform: translateX(5px);
+                    background: rgba(255, 255, 255, 0.15);
+                    border-color: #ffd700;
+                }
+                .instruction-box::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.2),
+                        transparent
+                    );
+                    animation: shine 2s infinite;
+                }
+                .instruction-icon {
+                    font-size: 1.2em;
+                    margin-right: 15px;
+                    color: #ffb300;
+                }
+                .instruction-label {
+                    color: #ffb300;
+                    margin-right: 8px;
+                }
+                .modal-title {
+                    font-size: 1.2em;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    color: #ffeb3b;
+                    text-shadow: 2px 2px #000;
+                    position: relative;
+                }
+                .button-container {
+                    display: flex;
+                    justify-content: center;
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                .game-button {
+                    background: #000;
+                    color: #fff;
+                    border: 2px solid #ffb300;
+                    padding: 12px 20px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 0.7em;
+                    transition: all 0.3s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .game-button:hover {
+                    transform: translateY(-2px);
+                    border-color: #ffd700;
+                    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+                }
+                .game-button::after {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: linear-gradient(
+                        45deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.1),
+                        transparent
+                    );
+                    transform: rotate(45deg);
+                    animation: shine 2s infinite;
+                }
+                .scanline {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: rgba(255, 255, 255, 0.1);
+                    animation: scanline 2s linear infinite;
+                    pointer-events: none;
+                }
+            </style>
+            <div class="scanline"></div>
+            <h2 class="modal-title">
+                <span style="color: #4CAF50;">⚡</span> HOW TO PLAY <span style="color: #4CAF50;">⚡</span>
+            </h2>
+            <div class="instruction-box">
+                <span class="instruction-icon">🎮</span>
+                <span class="instruction-label">Movement:</span>
+                <span>WASD or Arrow Keys to move</span>
+            </div>
+            <div class="instruction-box">
+                <span class="instruction-icon">🗣️</span>
+                <span class="instruction-label">Interact:</span>
+                <span>Press E near NPCs</span>
+            </div>
+            <div class="instruction-box">
+                <span class="instruction-icon">📊</span>
+                <span class="instruction-label">Stats:</span>
+                <span>Click stats icon (top-right)</span>
+            </div>
+            <div class="instruction-box">
+                <span class="instruction-icon">🎒</span>
+                <span class="instruction-label">Inventory:</span>
+                <span>Press I to view items</span>
+            </div>
+            <div class="instruction-box">
+                <span class="instruction-icon">💰</span>
+                <span class="instruction-label">Goal:</span>
+                <span>Learn finance & earn money!</span>
+            </div>
+            <div class="instruction-box">
+                <span class="instruction-icon">❓</span>
+                <span class="instruction-label">Help:</span>
+                <span>Press H to show this menu</span>
+            </div>
+            
+            <!-- NPC Cookies Section -->
+            <div class="instruction-box" style="flex-direction: column; align-items: flex-start;">
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <span class="instruction-icon">🍪</span>
+                    <span class="instruction-label">NPC Cookies Earned:</span>
+                </div>
+                <div id="npcCookiesDisplay" style="font-size: 0.6em; line-height: 1.4; color: #fff;">
+                    ${this.getNpcCookiesDisplayHTML()}
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button class="game-button" id="closeInstructions">GOT IT!</button>
+            </div>
+        `;
+
+        // Close modal on button click
+        modal.querySelector('#closeInstructions').addEventListener('click', () => {
+            modal.style.opacity = '0';
+            modal.style.transform = 'translate(-50%, -50%) scale(0.95)';
+            setTimeout(() => modal.remove(), 500);
+        });
+
+        // Add fade-in animation
+        modal.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        modal.style.opacity = '0';
+        modal.style.transform = 'translate(-50%, -50%) scale(0.95)';
+        document.body.appendChild(modal);
+        
+        // Trigger animation after a short delay
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.style.transform = 'translate(-50%, -50%) scale(1)';
+        }, 100);
+
+        // Add sound effects
+        const hoverSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+        hoverSound.volume = 0.2;
+
+        // Add hover sound effects to instruction boxes and buttons
+        const elements = modal.querySelectorAll('.instruction-box, .game-button');
+        elements.forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                hoverSound.currentTime = 0;
+                hoverSound.play();
+            });
+        });
+    }
+
+    getNpcCookiesDisplayHTML() {
+        const cookies = this.getAllNpcCookies();
+        if (Object.keys(cookies).length === 0) {
+            return '<span style="color: #999;">No NPC cookies yet! Talk to NPCs to earn cookies.</span>';
+        }
+        
+        return Object.entries(cookies).map(([npcId, reward]) => {
+            const emoji = '✅'; // Consistent emoji since all cookies are now "completed"
+            return `<span style="color: #4CAF50;">${emoji} ${npcId.replace(/-/g, ' ')}: completed</span>`;
+        }).join('<br>');
+    }
+
+    initProgressBar() {
+        // Create progress bar container
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'game-progress-bar';
+        progressContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9998;
+            border-bottom: 2px solid #333;
+            backdrop-filter: blur(5px);
+        `;
+
+        // Create progress fill
+        const progressFill = document.createElement('div');
+        progressFill.id = 'game-progress-fill';
+        progressFill.style.cssText = `
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+            background-size: 400% 100%;
+            animation: progressGradient 3s ease infinite;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        `;
+
+        // Create sparkle overlay
+        const sparkleOverlay = document.createElement('div');
+        sparkleOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: sparkleMove 2s linear infinite;
+        `;
+
+        // Add progress text
+        const progressText = document.createElement('div');
+        progressText.id = 'game-progress-text';
+        progressText.style.cssText = `
+            position: fixed;
+            top: 15px;
+            left: 20px;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 9999;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            backdrop-filter: blur(5px);
+        `;
+
+        // Add CSS animations if not present
+        if (!document.getElementById('progress-bar-styles')) {
+            const style = document.createElement('style');
+            style.id = 'progress-bar-styles';
+            style.textContent = `
+                @keyframes progressGradient {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                
+                @keyframes sparkleMove {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+                
+                @keyframes progressPulse {
+                    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+                    50% { box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.4); }
+                    100% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        progressFill.appendChild(sparkleOverlay);
+        progressContainer.appendChild(progressFill);
+        document.body.appendChild(progressContainer);
+        document.body.appendChild(progressText);
+
+        // Initialize progress
+        this.updateProgressBar();
+    }
+
+    updateProgressBar() {
+        const progressFill = document.getElementById('game-progress-fill');
+        const progressText = document.getElementById('game-progress-text');
+        
+        if (!progressFill || !progressText) return;
+
+        // Define the main waypoint NPCs (should match WaypointArrow.js)
+        const waypointNpcs = [
+            'Stock-NPC',
+            'Casino-NPC', 
+            'Fidelity',
+            'Schwab',
+            'Crypto-NPC',
+            'Bank-NPC',
+            'Market Computer'
+        ];
+
+        // Calculate progress based on waypoint NPC cookies only
+        const totalNpcs = waypointNpcs.length; // 7 NPCs
+        const npcCookies = this.getAllNpcCookies();
+        
+        // Count only waypoint NPCs that have at least one cookie
+        const completedNpcs = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
+        const progressPercentage = (completedNpcs / totalNpcs) * 100;
+
+        // Update progress bar
+        progressFill.style.width = `${progressPercentage}%`;
+        
+        // Update text
+        progressText.textContent = `Progress: ${completedNpcs}/${totalNpcs} NPCs (${Math.round(progressPercentage)}%)`;
+
+        // Add pulse effect when progress increases
+        if (progressPercentage > 0) {
+            progressFill.style.animation = 'progressGradient 3s ease infinite, progressPulse 1s ease-out';
+            setTimeout(() => {
+                progressFill.style.animation = 'progressGradient 3s ease infinite';
+            }, 1000);
+        }
+
+        // Special effect when completed
+        if (completedNpcs === totalNpcs) {
+            progressText.textContent = '🎉 QUEST COMPLETE! 🎉';
+            progressText.style.color = '#ffd700';
+            progressFill.style.background = 'linear-gradient(90deg, #ffd700, #ffeb3b, #ffd700)';
+            this.showCompletionCelebration();
+        }
+    }
+
+    showCompletionCelebration() {
+        // Create massive celebration effect
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                this.createCelebrationFirework();
+            }, i * 100);
+        }
+    }
+
+    createCelebrationFirework() {
+        const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
+        const particles = [];
+        const particleCount = 20;
+        
+        // Random position on screen
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight * 0.6; // Upper part of screen
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: fixed;
+                left: ${x}px;
+                top: ${y}px;
+                width: 8px;
+                height: 8px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 10001;
+                box-shadow: 0 0 10px currentColor;
+            `;
+            
+            document.body.appendChild(particle);
+            particles.push(particle);
+            
+            // Animate particle
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const distance = 100 + Math.random() * 150;
+            const deltaX = Math.cos(angle) * distance;
+            const deltaY = Math.sin(angle) * distance;
+            
+            particle.animate([
+                {
+                    transform: 'translate(-50%, -50%) scale(0)',
+                    opacity: 1
+                },
+                {
+                    transform: 'translate(-50%, -50%) scale(1)',
+                    opacity: 1,
+                    offset: 0.1
+                },
+                {
+                    transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0.5)`,
+                    opacity: 0.5,
+                    offset: 0.8
+                },
+                {
+                    transform: `translate(calc(-50% + ${deltaX * 1.2}px), calc(-50% + ${deltaY * 1.2}px)) scale(0)`,
+                    opacity: 0
+                }
+            ], {
+                duration: 2000 + Math.random() * 1000,
+                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            });
+        }
+        
+        // Clean up particles
+        setTimeout(() => {
+            particles.forEach(particle => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            });
+        }, 3000);
+    }
+
+    initAudioToggle() {
+        // Check for existing audio preference
+        const isAudioEnabled = localStorage.getItem('gameAudioEnabled') !== 'false';
+        
+        // Create audio toggle button container
+        const audioToggleContainer = document.createElement('div');
+        audioToggleContainer.id = 'audio-toggle-container';
+        audioToggleContainer.style.cssText = `
+            position: fixed;
+            top: 120px;
+            left: 20px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        `;
+        
+        // Create the toggle button
+        const audioButton = document.createElement('button');
+        audioButton.id = 'audio-toggle-button';
+        audioButton.innerHTML = isAudioEnabled ? '🔊' : '🔇';
+        audioButton.title = isAudioEnabled ? 'Click to mute audio' : 'Click to enable audio';
+        audioButton.style.cssText = `
+            background: #000;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            animation: glowBorder 2s infinite alternate;
+        `;
+        
+        // Add label
+        const audioLabel = document.createElement('span');
+        audioLabel.style.cssText = `
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            opacity: 0.8;
+        `;
+        audioLabel.textContent = isAudioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+        
+        // Add click functionality
+        audioButton.addEventListener('click', () => {
+            const currentState = localStorage.getItem('gameAudioEnabled') !== 'false';
+            const newState = !currentState;
+            
+            // Update localStorage
+            localStorage.setItem('gameAudioEnabled', newState.toString());
+            
+            // Update button appearance
+            audioButton.innerHTML = newState ? '🔊' : '🔇';
+            audioButton.title = newState ? 'Click to mute audio' : 'Click to enable audio';
+            audioLabel.textContent = newState ? 'AUDIO ON' : 'AUDIO OFF';
+            
+            // Update global audio state
+            window.gameAudioEnabled = newState;
+            
+            // Play a confirmation sound if audio is being enabled
+            if (newState) {
+                this.playConfirmationSound();
+            }
+            
+            // Show brief feedback
+            this.showAudioToggleFeedback(newState);
+        });
+        
+        // Add hover effects
+        audioButton.addEventListener('mouseenter', () => {
+            audioButton.style.transform = 'scale(1.05)';
+            audioButton.style.borderColor = '#ffd700';
+            audioButton.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
+        });
+        
+        audioButton.addEventListener('mouseleave', () => {
+            audioButton.style.transform = 'scale(1)';
+            audioButton.style.borderColor = '#fff';
+            audioButton.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+        });
+        
+        // Assemble and add to page
+        audioToggleContainer.appendChild(audioButton);
+        audioToggleContainer.appendChild(audioLabel);
+        document.body.appendChild(audioToggleContainer);
+        
+        // Set global audio state
+        window.gameAudioEnabled = isAudioEnabled;
+        
+        // Add CSS for animations if not present
+        if (!document.getElementById('audio-toggle-styles')) {
+            const style = document.createElement('style');
+            style.id = 'audio-toggle-styles';
+            style.textContent = `
+                @keyframes audioFeedback {
+                    0% { transform: scale(1) rotate(0deg); }
+                    25% { transform: scale(1.1) rotate(-5deg); }
+                    50% { transform: scale(1.2) rotate(5deg); }
+                    75% { transform: scale(1.1) rotate(-2deg); }
+                    100% { transform: scale(1) rotate(0deg); }
+                }
+                
+                .audio-feedback {
+                    animation: audioFeedback 0.5s ease-out;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    playConfirmationSound() {
+        // Play a brief confirmation beep when audio is enabled
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (e) {
+            console.log("Confirmation sound error:", e);
+        }
+    }
+    
+    showAudioToggleFeedback(isEnabled) {
+        // Show visual feedback when audio is toggled
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: ${isEnabled ? '#4CAF50' : '#f44336'};
+            padding: 20px 30px;
+            border: 2px solid ${isEnabled ? '#4CAF50' : '#f44336'};
+            border-radius: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            z-index: 10001;
+            pointer-events: none;
+            animation: audioFeedback 0.5s ease-out;
+            box-shadow: 0 0 20px rgba(${isEnabled ? '76, 175, 80' : '244, 67, 54'}, 0.5);
+        `;
+        feedback.textContent = isEnabled ? '🔊 AUDIO ENABLED' : '🔇 AUDIO DISABLED';
+        
+        document.body.appendChild(feedback);
+        
+        // Remove feedback after animation
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 1000);
+    }
+}
+
 export default Game;
