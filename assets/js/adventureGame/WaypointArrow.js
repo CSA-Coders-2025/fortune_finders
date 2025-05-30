@@ -53,7 +53,7 @@ export default class WaypointArrow {
 
   createArrowElement() {
     let arrowImg = document.createElement('img');
-    arrowImg.src = this.gamePath + "/images/gamify/redarrow1.png";
+    arrowImg.src = this.gamePath + "/images/gamify/redarrow2.png";
     arrowImg.id = 'waypointArrow';
     arrowImg.style.position = 'absolute';
     arrowImg.style.zIndex = 2000;
