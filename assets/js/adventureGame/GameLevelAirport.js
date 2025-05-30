@@ -1,11 +1,10 @@
 import GameEnvBackground from './GameEngine/GameEnvBackground.js';
 import Npc from './GameEngine/Npc.js';
 import Player from './GameEngine/Player.js';
-import GameControl from './GameEngine/GameControl.js';
-import Game from './Game.js';
 import showDialogBox, { showYellenModal, getFrankAdviceList, getMorganFacts, getSatoshiQuestions } from './DialogBox.js';
 import WaypointArrow from './WaypointArrow.js';
 import NpcProgressSystem from './NpcProgressSystem.js';
+
 let socketURI
 let javaURI
 let pagesURI;
@@ -69,82 +68,8 @@ class GameLevelAirport {
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
       reaction: function () {
-        // Create modal container if it doesn't exist
-        let casinoModal = document.getElementById('casinoModal');
-        if (!casinoModal) {
-          casinoModal = document.createElement("div");
-          casinoModal.id = "casinoModal";
-          casinoModal.style.position = "fixed";
-          casinoModal.style.top = "0";
-          casinoModal.style.left = "0";
-          casinoModal.style.width = "100vw";
-          casinoModal.style.height = "100vh";
-          casinoModal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-          casinoModal.style.display = "none";
-          casinoModal.style.justifyContent = "center";
-          casinoModal.style.alignItems = "center";
-          casinoModal.style.zIndex = "1000";
-          document.body.appendChild(casinoModal);
-
-          // Create iframe wrapper
-          const iframeWrapper = document.createElement("div");
-          iframeWrapper.id = "casinoFrameWrapper";
-          iframeWrapper.style.position = "relative";
-          iframeWrapper.style.overflow = "hidden";
-          iframeWrapper.style.width = "90%";
-          iframeWrapper.style.maxWidth = "1000px";
-          iframeWrapper.style.height = "80%";
-          iframeWrapper.style.border = "2px solid #ccc";
-          iframeWrapper.style.borderRadius = "8px";
-          iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-          casinoModal.appendChild(iframeWrapper);
-
-          // Create iframe
-          const casinoFrame = document.createElement("iframe");
-          casinoFrame.id = "casinoFrame";
-          casinoFrame.style.width = "100%";
-          casinoFrame.style.height = "110%";
-          casinoFrame.style.position = "absolute";
-          casinoFrame.style.top = "-10%";
-          casinoFrame.style.left = "0";
-          casinoFrame.style.border = "none";
-          iframeWrapper.appendChild(casinoFrame);
-
-          // Add close button
-          const closeBtn = document.createElement("button");
-          closeBtn.innerText = "✖";
-          closeBtn.style.position = "absolute";
-          closeBtn.style.top = "10px";
-          closeBtn.style.right = "10px";
-          closeBtn.style.fontSize = "24px";
-          closeBtn.style.background = "#00ff80";
-          closeBtn.style.color = "#000";
-          closeBtn.style.border = "none";
-          closeBtn.style.padding = "10px 15px";
-          closeBtn.style.borderRadius = "5px";
-          closeBtn.style.cursor = "pointer";
-          closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
-          closeBtn.style.zIndex = "1100";
-          closeBtn.style.transition = "all 0.3s ease";
-          closeBtn.onmouseover = () => {
-            closeBtn.style.background = "#00cc66";
-            closeBtn.style.transform = "scale(1.1)";
-          };
-          closeBtn.onmouseout = () => {
-            closeBtn.style.background = "#00ff80";
-            closeBtn.style.transform = "scale(1)";
-          };
-          closeBtn.onclick = () => {
-            casinoModal.style.display = "none";
-            casinoFrame.src = "";
-          };
-          iframeWrapper.appendChild(closeBtn);
-        }
-
         function openInModal(url) {
-          const casinoFrame = document.getElementById('casinoFrame');
-          casinoFrame.src = url;
-          casinoModal.style.display = "flex";
+          openReusableModal('casinoModal', 'casinoFrame', url);
         }
 
         const dialogFunctions = {
@@ -225,10 +150,8 @@ class GameLevelAirport {
         return dialogFunctions;
       },
       interact: async function () {
-
-          const dialogFunctions = sprite_data_casino.reaction();
-          dialogFunctions.intro();
-        
+        const dialogFunctions = sprite_data_casino.reaction();
+        dialogFunctions.intro();
       }
     };
 
@@ -245,85 +168,10 @@ class GameLevelAirport {
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.03, heightPercentage: 0.06 },
       reaction: function () {
-        // Create modal container if it doesn't exist
-        let stocksModal = document.getElementById('stocksModal');
-        if (!stocksModal) {
-          stocksModal = document.createElement("div");
-          stocksModal.id = "stocksModal";
-          stocksModal.style.position = "fixed";
-          stocksModal.style.top = "0";
-          stocksModal.style.left = "0";
-          stocksModal.style.width = "100vw";
-          stocksModal.style.height = "100vh";
-          stocksModal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-          stocksModal.style.display = "none";
-          stocksModal.style.justifyContent = "center";
-          stocksModal.style.alignItems = "center";
-          stocksModal.style.zIndex = "1000";
-          document.body.appendChild(stocksModal);
-
-          // Create iframe wrapperr
-          const iframeWrapper = document.createElement("div");
-          iframeWrapper.id = "stocksFrameWrapper";
-          iframeWrapper.style.position = "relative";
-          iframeWrapper.style.overflow = "hidden";
-          iframeWrapper.style.width = "90%";
-          iframeWrapper.style.maxWidth = "1000px";
-          iframeWrapper.style.height = "80%";
-          iframeWrapper.style.border = "2px solid #ccc";
-          iframeWrapper.style.borderRadius = "8px";
-          iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-          stocksModal.appendChild(iframeWrapper);
-
-          // Create iframe
-          const stocksFrame = document.createElement("iframe");
-          stocksFrame.id = "stocksFrame";
-          stocksFrame.style.width = "100%";
-          stocksFrame.style.height = "110%";
-          stocksFrame.style.position = "absolute";
-          stocksFrame.style.top = "-10%";
-          stocksFrame.style.left = "0";
-          stocksFrame.style.border = "none";
-          iframeWrapper.appendChild(stocksFrame);
-
-          // Add close button
-          const closeBtn = document.createElement("button");
-          closeBtn.innerText = "✖";
-          closeBtn.style.position = "absolute";
-          closeBtn.style.top = "10px";
-          closeBtn.style.right = "10px";
-          closeBtn.style.fontSize = "24px";
-          closeBtn.style.background = "#00ff80";
-          closeBtn.style.color = "#000";
-          closeBtn.style.border = "none";
-          closeBtn.style.padding = "10px 15px";
-          closeBtn.style.borderRadius = "5px";
-          closeBtn.style.cursor = "pointer";
-          closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
-          closeBtn.style.zIndex = "1100";
-          closeBtn.style.transition = "all 0.3s ease";
-          closeBtn.onmouseover = () => {
-            closeBtn.style.background = "#00cc66";
-            closeBtn.style.transform = "scale(1.1)";
-          };
-          closeBtn.onmouseout = () => {
-            closeBtn.style.background = "#00ff80";
-            closeBtn.style.transform = "scale(1)";
-          };
-          closeBtn.onclick = () => {
-            stocksModal.style.display = "none";
-            stocksFrame.src = "";
-          };
-          iframeWrapper.appendChild(closeBtn);
-        }
-
         function openInModal(url) {
-          const stocksFrame = document.getElementById('stocksFrame');
-          stocksFrame.src = url;
-          stocksModal.style.display = "flex";
+          openReusableModal('stocksModal', 'stocksFrame', url);
         }
 
-        // Define dialog functions
         const dialogFunctions = {
           intro: function() {
           showDialogBox(
@@ -399,71 +247,6 @@ class GameLevelAirport {
       }
     };
 
-    const cryptoModal = document.createElement("div");
-    cryptoModal.id = "cryptoModal";
-    cryptoModal.style.position = "fixed";
-    cryptoModal.style.top = "0";
-    cryptoModal.style.left = "0";
-    cryptoModal.style.width = "100vw";
-    cryptoModal.style.height = "100vh";
-    cryptoModal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-    cryptoModal.style.display = "none";
-    cryptoModal.style.justifyContent = "center";
-    cryptoModal.style.alignItems = "center";
-    cryptoModal.style.zIndex = "1000";
-    document.body.appendChild(cryptoModal);
-
-    const iframeWrapper = document.createElement("div");
-    iframeWrapper.id = "cryptoFrameWrapper";
-    iframeWrapper.style.position = "relative";
-    iframeWrapper.style.overflow = "hidden";
-    iframeWrapper.style.width = "90%";
-    iframeWrapper.style.maxWidth = "1000px";
-    iframeWrapper.style.height = "80%";
-    iframeWrapper.style.border = "2px solid #ccc";
-    iframeWrapper.style.borderRadius = "8px";
-    iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-    cryptoModal.appendChild(iframeWrapper);
-
-    const cryptoFrame = document.createElement("iframe");
-    cryptoFrame.id = "cryptoFrame";
-    cryptoFrame.style.width = "100%";
-    cryptoFrame.style.height = "110%";
-    cryptoFrame.style.position = "absolute";
-    cryptoFrame.style.top = "-10%";
-    cryptoFrame.style.left = "0";
-    cryptoFrame.style.border = "none";
-    iframeWrapper.appendChild(cryptoFrame);
-
-    const closeBtn = document.createElement("button");
-    closeBtn.innerText = "✖";
-    closeBtn.style.position = "absolute";
-    closeBtn.style.top = "10px";
-    closeBtn.style.right = "10px";
-    closeBtn.style.fontSize = "24px";
-    closeBtn.style.background = "#00ff80";
-    closeBtn.style.color = "#000";
-    closeBtn.style.border = "none";
-    closeBtn.style.padding = "10px 15px";
-    closeBtn.style.borderRadius = "5px";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
-    closeBtn.style.zIndex = "1100";
-    closeBtn.style.transition = "all 0.3s ease";
-    closeBtn.onmouseover = () => {
-      closeBtn.style.background = "#00cc66";
-      closeBtn.style.transform = "scale(1.1)";
-    };
-    closeBtn.onmouseout = () => {
-      closeBtn.style.background = "#00ff80";
-      closeBtn.style.transform = "scale(1)";
-    };
-    closeBtn.onclick = () => {
-      cryptoModal.style.display = "none";
-      cryptoFrame.src = "";
-    };
-    iframeWrapper.appendChild(closeBtn);
-//adsf
     const sprite_src_crypto = path + "/images/gamify/satoshiNakamoto.png";
     const sprite_data_crypto = {
       id: 'Crypto-NPC',
@@ -477,7 +260,10 @@ class GameLevelAirport {
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
       reaction: function () {
-        // Define dialog functions
+        function openInModal(url) {
+          openReusableModal('cryptoModal', 'cryptoFrame', url);
+        }
+
         const dialogFunctions = {
           intro: function() {
           showDialogBox(
@@ -518,12 +304,6 @@ class GameLevelAirport {
 
         };
 
-        function openInModal(url) {
-          cryptoFrame.src = url;
-          cryptoModal.style.display = "flex";
-        }
-
-        // Return the dialog functions so they can be accessed from interact
         return dialogFunctions;
       },
       interact: async function () {
@@ -550,7 +330,10 @@ class GameLevelAirport {
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
       reaction: function () {
-        // Define dialog functions
+        function openInModal(url) {
+          openReusableModal('miningModal', 'miningFrame', url);
+        }
+
         const dialogFunctions = {
           intro: function() {
             showDialogBox(
@@ -601,79 +384,6 @@ class GameLevelAirport {
             );
           }
         };
-
-        function openInModal(url) {
-          let modal = document.getElementById('miningModal');
-          if (!modal) {
-            modal = document.createElement("div");
-            modal.id = "miningModal";
-            modal.style.position = "fixed";
-            modal.style.top = "0";
-            modal.style.left = "0";
-            modal.style.width = "100vw";
-            modal.style.height = "100vh";
-            modal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-            modal.style.display = "none";
-            modal.style.justifyContent = "center";
-            modal.style.alignItems = "center";
-            modal.style.zIndex = "1000";
-            document.body.appendChild(modal);
-
-            const iframeWrapper = document.createElement("div");
-            iframeWrapper.id = "miningFrameWrapper";
-            iframeWrapper.style.position = "relative";
-            iframeWrapper.style.overflow = "hidden";
-            iframeWrapper.style.width = "90%";
-            iframeWrapper.style.maxWidth = "1000px";
-            iframeWrapper.style.height = "80%";
-            iframeWrapper.style.border = "2px solid #ccc";
-            iframeWrapper.style.borderRadius = "8px";
-            iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-            modal.appendChild(iframeWrapper);
-
-            const miningFrame = document.createElement("iframe");
-            miningFrame.id = "miningFrame";
-            miningFrame.style.width = "100%";
-            miningFrame.style.height = "110%";
-            miningFrame.style.position = "absolute";
-            miningFrame.style.top = "-10%";
-            miningFrame.style.left = "0";
-            miningFrame.style.border = "none";
-            iframeWrapper.appendChild(miningFrame);
-
-            const closeBtn = document.createElement("button");
-            closeBtn.innerText = "✖";
-            closeBtn.style.position = "absolute";
-            closeBtn.style.top = "10px";
-            closeBtn.style.right = "10px";
-            closeBtn.style.fontSize = "24px";
-            closeBtn.style.background = "#00ff80";
-            closeBtn.style.color = "#000";
-            closeBtn.style.border = "none";
-            closeBtn.style.padding = "10px 15px";
-            closeBtn.style.borderRadius = "5px";
-            closeBtn.style.cursor = "pointer";
-            closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
-            closeBtn.style.zIndex = "1100";
-            closeBtn.style.transition = "all 0.3s ease";
-            closeBtn.onmouseover = () => {
-              closeBtn.style.background = "#00cc66";
-              closeBtn.style.transform = "scale(1.1)";
-            };
-            closeBtn.onmouseout = () => {
-              closeBtn.style.background = "#00ff80";
-              closeBtn.style.transform = "scale(1)";
-            };
-            closeBtn.onclick = () => {
-              modal.style.display = "none";
-              miningFrame.src = "";
-            };
-            iframeWrapper.appendChild(closeBtn);
-          }
-          const miningFrame = document.getElementById('miningFrame');
-          miningFrame.src = url;
-          modal.style.display = "flex";
-        }
 
         return dialogFunctions;
       },
@@ -803,84 +513,10 @@ class GameLevelAirport {
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
       reaction: function () {
-        // Modern dialog and iframe for Janet Yellen
         function openInModal(url) {
-          let modal = document.getElementById('yellenModal');
-          if (!modal) {
-            modal = document.createElement("div");
-            modal.id = "yellenModal";
-            modal.style.position = "fixed";
-            modal.style.top = "0";
-            modal.style.left = "0";
-            modal.style.width = "100vw";
-            modal.style.height = "100vh";
-            modal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-            modal.style.display = "none";
-            modal.style.justifyContent = "center";
-            modal.style.alignItems = "center";
-            modal.style.zIndex = "1000";
-            document.body.appendChild(modal);
-
-            // Create iframe wrapper
-            const iframeWrapper = document.createElement("div");
-            iframeWrapper.id = "yellenFrameWrapper";
-            iframeWrapper.style.position = "relative";
-            iframeWrapper.style.overflow = "hidden";
-            iframeWrapper.style.width = "90%";
-            iframeWrapper.style.maxWidth = "1000px";
-            iframeWrapper.style.height = "80%";
-            iframeWrapper.style.border = "2px solid #ccc";
-            iframeWrapper.style.borderRadius = "8px";
-            iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-            modal.appendChild(iframeWrapper);
-
-            // Create iframe
-            const yellenFrame = document.createElement("iframe");
-            yellenFrame.id = "yellenFrame";
-            yellenFrame.style.width = "100%";
-            yellenFrame.style.height = "110%";
-            yellenFrame.style.position = "absolute";
-            yellenFrame.style.top = "-10%";
-            yellenFrame.style.left = "0";
-            yellenFrame.style.border = "none";
-            iframeWrapper.appendChild(yellenFrame);
-
-            // Add close button
-            const closeBtn = document.createElement("button");
-            closeBtn.innerText = "✖";
-            closeBtn.style.position = "absolute";
-            closeBtn.style.top = "10px";
-            closeBtn.style.right = "10px";
-            closeBtn.style.fontSize = "24px";
-            closeBtn.style.background = "#00ff80";
-            closeBtn.style.color = "#000";
-            closeBtn.style.border = "none";
-            closeBtn.style.padding = "10px 15px";
-            closeBtn.style.borderRadius = "5px";
-            closeBtn.style.cursor = "pointer";
-            closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
-            closeBtn.style.zIndex = "1100";
-            closeBtn.style.transition = "all 0.3s ease";
-            closeBtn.onmouseover = () => {
-              closeBtn.style.background = "#00cc66";
-              closeBtn.style.transform = "scale(1.1)";
-            };
-            closeBtn.onmouseout = () => {
-              closeBtn.style.background = "#00ff80";
-              closeBtn.style.transform = "scale(1)";
-            };
-            closeBtn.onclick = () => {
-              modal.style.display = "none";
-              yellenFrame.src = "";
-            };
-            iframeWrapper.appendChild(closeBtn);
-          }
-          const yellenFrame = document.getElementById('yellenFrame');
-          yellenFrame.src = `${pagesURI}/${url}`;
-          modal.style.display = "flex";
+          openReusableModal('yellenModal', 'yellenFrame', `${pagesURI}/${url}`);
         }
 
-        // Define dialog functions
         const dialogFunctions = {
           intro: function() {
           showDialogBox(
@@ -890,6 +526,7 @@ class GameLevelAirport {
                 { label: "Learn about the Bank", action: () => dialogFunctions.explainBank(), keepOpen: true },
                 { label: "Review Analytics", action: () => dialogFunctions.analyticsIntro(), keepOpen: true },
                 { label: "Financial Tip", action: () => dialogFunctions.financialTip(), keepOpen: true },
+                { label: "Loans", action: () => openLeaderboardModal("https://open-coding-society.github.io/pages/gamify/loans")},
                 { label: "Overall Leaderboard", action: () => openLeaderboardModal("https://open-coding-society.github.io/pages/leaderboard/overall-leaderboard") },
                 { label: "Thank you, Ms. Yellen", action: () => {
                   // Give NPC cookie for completing the dialogue
@@ -955,79 +592,10 @@ class GameLevelAirport {
     };
 
     function openLeaderboardModal(url) {
-      let modal = document.getElementById('leaderboardModal');
-      if (!modal) {
-        modal = document.createElement("div");
-        modal.id = "leaderboardModal";
-        modal.style.position = "fixed";
-        modal.style.top = "0";
-        modal.style.left = "0";
-        modal.style.width = "100vw";
-        modal.style.height = "100vh";
-        modal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-        modal.style.display = "none";
-        modal.style.justifyContent = "center";
-        modal.style.alignItems = "center";
-        modal.style.zIndex = "1000";
-        document.body.appendChild(modal);
-
-        // Create iframe wrapper
-        const iframeWrapper = document.createElement("div");
-        iframeWrapper.id = "leaderboardFrameWrapper";
-        iframeWrapper.style.position = "relative";
-        iframeWrapper.style.overflow = "hidden";
-        iframeWrapper.style.width = "90%";
-        iframeWrapper.style.maxWidth = "1000px";
-        iframeWrapper.style.height = "80%";
-        iframeWrapper.style.border = "2px solid #ccc";
-        iframeWrapper.style.borderRadius = "8px";
-        iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-        modal.appendChild(iframeWrapper);
-
-        // Create iframe
-        const leaderboardFrame = document.createElement("iframe");
-        leaderboardFrame.id = "leaderboardFrame";
-        leaderboardFrame.style.width = "100%";
-        leaderboardFrame.style.height = "110%";
-        leaderboardFrame.style.position = "absolute";
-        leaderboardFrame.style.top = "-10%";
-        leaderboardFrame.style.left = "0";
-        leaderboardFrame.style.border = "none";
-        iframeWrapper.appendChild(leaderboardFrame);
-
-        // Add close button
-        const closeBtn = document.createElement("button");
-        closeBtn.innerText = "✖";
-        closeBtn.style.position = "absolute";
-        closeBtn.style.top = "10px";
-        closeBtn.style.right = "10px";
-        closeBtn.style.fontSize = "24px";
-        closeBtn.style.background = "#00ff80";
-        closeBtn.style.color = "#000";
-        closeBtn.style.border = "none";
-        closeBtn.style.padding = "10px 15px";
-        closeBtn.style.borderRadius = "5px";
-        closeBtn.style.cursor = "pointer";
-        closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
-        closeBtn.style.zIndex = "1100";
-        closeBtn.style.transition = "all 0.3s ease";
-        closeBtn.onmouseover = () => {
-          closeBtn.style.background = "#00cc66";
-          closeBtn.style.transform = "scale(1.1)";
-        };
-        closeBtn.onmouseout = () => {
-          closeBtn.style.background = "#00ff80";
-          closeBtn.style.transform = "scale(1)";
-        };
-        closeBtn.onclick = () => {
-          modal.style.display = "none";
-          leaderboardFrame.src = "";
-        };
-        iframeWrapper.appendChild(closeBtn);
-      }
-      const leaderboardFrame = document.getElementById('leaderboardFrame');
-      leaderboardFrame.src = `${pagesURI}/${url}`;
-      modal.style.display = "flex";
+      // If url is absolute (starts with http), use as is. Otherwise, prepend pagesURI
+      const isAbsolute = /^https?:\/\//.test(url);
+      const finalUrl = isAbsolute ? url : `${pagesURI}/${url}`;
+      openReusableModal('leaderboardModal', 'leaderboardFrame', finalUrl);
     }
 
     this.classes = [
@@ -1062,3 +630,80 @@ window.addEventListener('DOMContentLoaded', function() {
   // Initialize the waypoint arrow
   new WaypointArrow(gameCanvas, window.gamePath);
 });
+
+// Utility function to create and open a reusable modal with an iframe
+function openReusableModal(modalId, frameId, url) {
+  let modal = document.getElementById(modalId);
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = modalId;
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100vw";
+    modal.style.height = "100vh";
+    modal.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+    modal.style.display = "none";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+    modal.style.zIndex = "1000";
+    document.body.appendChild(modal);
+
+    // Create iframe wrapper
+    const iframeWrapper = document.createElement("div");
+    iframeWrapper.id = `${frameId}Wrapper`;
+    iframeWrapper.style.position = "relative";
+    iframeWrapper.style.overflow = "hidden";
+    iframeWrapper.style.width = "90%";
+    iframeWrapper.style.maxWidth = "1000px";
+    iframeWrapper.style.height = "80%";
+    iframeWrapper.style.border = "2px solid #ccc";
+    iframeWrapper.style.borderRadius = "8px";
+    iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
+    modal.appendChild(iframeWrapper);
+
+    // Create iframe
+    const frame = document.createElement("iframe");
+    frame.id = frameId;
+    frame.style.width = "100%";
+    frame.style.height = "110%";
+    frame.style.position = "absolute";
+    frame.style.top = "-10%";
+    frame.style.left = "0";
+    frame.style.border = "none";
+    iframeWrapper.appendChild(frame);
+
+    // Add close button
+    const closeBtn = document.createElement("button");
+    closeBtn.innerText = "✖";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "10px";
+    closeBtn.style.right = "10px";
+    closeBtn.style.fontSize = "24px";
+    closeBtn.style.background = "#00ff80";
+    closeBtn.style.color = "#000";
+    closeBtn.style.border = "none";
+    closeBtn.style.padding = "10px 15px";
+    closeBtn.style.borderRadius = "5px";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.boxShadow = "0 0 15px rgba(0,255,128,0.5)";
+    closeBtn.style.zIndex = "1100";
+    closeBtn.style.transition = "all 0.3s ease";
+    closeBtn.onmouseover = () => {
+      closeBtn.style.background = "#00cc66";
+      closeBtn.style.transform = "scale(1.1)";
+    };
+    closeBtn.onmouseout = () => {
+      closeBtn.style.background = "#00ff80";
+      closeBtn.style.transform = "scale(1)";
+    };
+    closeBtn.onclick = () => {
+      modal.style.display = "none";
+      frame.src = "";
+    };
+    iframeWrapper.appendChild(closeBtn);
+  }
+  const frame = document.getElementById(frameId);
+  frame.src = url;
+  modal.style.display = "flex";
+}
