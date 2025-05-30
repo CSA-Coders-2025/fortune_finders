@@ -610,7 +610,7 @@ class StatsManager {
         // Update progress bar
         if (isFirstTime) {
             setTimeout(() => {
-                this.game.updateProgressBar();
+                // this.game.updateProgressBar(); // Removed progress bar
             }, 500); // Slight delay for better visual timing
         }
         
@@ -1877,7 +1877,6 @@ class Game {
         
         this.initUser();
         this.inventoryManager.giveStartingItems();
-        this.initProgressBar();
         this.showGameInstructions();
         
         // Add keyboard event listener for 'H' key
@@ -2220,37 +2219,25 @@ class Game {
             top: 60px;
             left: 0;
             right: 0;
-            height: 8px;
+            height: auto;
             background: rgba(0, 0, 0, 0.8);
             z-index: 9998;
             border-bottom: 2px solid #333;
             backdrop-filter: blur(5px);
+            padding: 8px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         `;
 
-        // Create progress fill
-        const progressFill = document.createElement('div');
-        progressFill.id = 'game-progress-fill';
-        progressFill.style.cssText = `
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
-            background-size: 400% 100%;
-            animation: progressGradient 3s ease infinite;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        `;
-
-        // Create sparkle overlay
-        const sparkleOverlay = document.createElement('div');
-        sparkleOverlay.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-            animation: sparkleMove 2s linear infinite;
+        // Create progress emoji container
+        const progressEmojis = document.createElement('div');
+        progressEmojis.id = 'game-progress-emojis';
+        progressEmojis.style.cssText = `
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 0 10px;
         `;
 
         // Add progress text
@@ -2258,7 +2245,7 @@ class Game {
         progressText.id = 'game-progress-text';
         progressText.style.cssText = `
             position: fixed;
-            top: 75px;
+            top: 95px;
             left: 20px;
             color: white;
             font-family: 'Press Start 2P', cursive;
@@ -2272,8 +2259,7 @@ class Game {
             backdrop-filter: blur(5px);
         `;
 
-        progressFill.appendChild(sparkleOverlay);
-        progressContainer.appendChild(progressFill);
+        progressContainer.appendChild(progressEmojis);
         document.body.appendChild(progressContainer);
         document.body.appendChild(progressText);
 
@@ -2285,21 +2271,44 @@ class Game {
             const style = document.createElement('style');
             style.id = 'progress-bar-styles';
             style.textContent = `
-                @keyframes progressGradient {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
+                @keyframes controllerPulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                    100% { transform: scale(1); }
                 }
                 
-                @keyframes sparkleMove {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
+                @keyframes controllerGlow {
+                    0% { 
+                        filter: drop-shadow(0 0 5px #4CAF50);
+                        text-shadow: 0 0 10px #4CAF50;
+                    }
+                    50% { 
+                        filter: drop-shadow(0 0 15px #4CAF50);
+                        text-shadow: 0 0 20px #4CAF50;
+                    }
+                    100% { 
+                        filter: drop-shadow(0 0 5px #4CAF50);
+                        text-shadow: 0 0 10px #4CAF50;
+                    }
                 }
                 
-                @keyframes progressPulse {
-                    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
-                    50% { box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.4); }
-                    100% { box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+                @keyframes controllerBounce {
+                    0% { transform: translateY(0); }
+                    50% { transform: translateY(-3px); }
+                    100% { transform: translateY(0); }
+                }
+                
+                .controller-completed {
+                    animation: controllerGlow 2s infinite;
+                }
+                
+                .controller-pending {
+                    opacity: 0.3;
+                    filter: grayscale(100%);
+                }
+                
+                .controller-new {
+                    animation: controllerPulse 0.5s ease-out, controllerBounce 1s ease-out 0.5s;
                 }
             `;
             document.head.appendChild(style);
@@ -2307,10 +2316,10 @@ class Game {
     }
 
     updateProgressBar() {
-        const progressFill = document.getElementById('game-progress-fill');
+        const progressEmojis = document.getElementById('game-progress-emojis');
         const progressText = document.getElementById('game-progress-text');
         
-        if (!progressFill || !progressText) return;
+        if (!progressEmojis || !progressText) return;
 
         // Define the main waypoint NPCs (should match WaypointArrow.js)
         const waypointNpcs = [
@@ -2331,25 +2340,75 @@ class Game {
         const completedNpcs = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
         const progressPercentage = (completedNpcs / totalNpcs) * 100;
 
-        // Update progress bar
-        progressFill.style.width = `${progressPercentage}%`;
+        // Store previous completed count for animation
+        const previousCompleted = parseInt(progressEmojis.dataset.previousCompleted || '0');
+        progressEmojis.dataset.previousCompleted = completedNpcs.toString();
+
+        // Clear existing emojis
+        progressEmojis.innerHTML = '';
+
+        // Create controller emojis for each NPC
+        for (let i = 0; i < totalNpcs; i++) {
+            const controllerEmoji = document.createElement('span');
+            const isCompleted = i < completedNpcs;
+            const isNewlyCompleted = i < completedNpcs && i >= previousCompleted;
+            
+            controllerEmoji.style.cssText = `
+                font-size: 24px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                user-select: none;
+            `;
+            
+            if (isCompleted) {
+                controllerEmoji.textContent = '🎮'; // Completed controller
+                controllerEmoji.className = isNewlyCompleted ? 'controller-completed controller-new' : 'controller-completed';
+                controllerEmoji.title = `${waypointNpcs[i]} - Completed!`;
+            } else {
+                controllerEmoji.textContent = '🕹️'; // Pending controller (different style)
+                controllerEmoji.className = 'controller-pending';
+                controllerEmoji.title = `${waypointNpcs[i]} - Not completed yet`;
+            }
+            
+            // Add hover effects
+            controllerEmoji.addEventListener('mouseenter', () => {
+                if (isCompleted) {
+                    controllerEmoji.style.transform = 'scale(1.2)';
+                    controllerEmoji.style.filter = 'drop-shadow(0 0 10px #ffd700)';
+                } else {
+                    controllerEmoji.style.transform = 'scale(1.1)';
+                    controllerEmoji.style.opacity = '0.6';
+                }
+            });
+            
+            controllerEmoji.addEventListener('mouseleave', () => {
+                controllerEmoji.style.transform = 'scale(1)';
+                if (isCompleted) {
+                    controllerEmoji.style.filter = '';
+                } else {
+                    controllerEmoji.style.opacity = '0.3';
+                }
+            });
+            
+            progressEmojis.appendChild(controllerEmoji);
+        }
         
         // Update text
-        progressText.textContent = `Progress: ${completedNpcs}/${totalNpcs} NPCs (${Math.round(progressPercentage)}%)`;
-
-        // Add pulse effect when progress increases
-        if (progressPercentage > 0) {
-            progressFill.style.animation = 'progressGradient 3s ease infinite, progressPulse 1s ease-out';
-            setTimeout(() => {
-                progressFill.style.animation = 'progressGradient 3s ease infinite';
-            }, 1000);
-        }
+        progressText.textContent = `🎮 ${completedNpcs}/${totalNpcs} Controllers Earned (${Math.round(progressPercentage)}%)`;
 
         // Special effect when completed
         if (completedNpcs === totalNpcs) {
-            progressText.textContent = '🎉 QUEST COMPLETE! 🎉';
+            progressText.textContent = '🎉 ALL CONTROLLERS UNLOCKED! 🎉';
             progressText.style.color = '#ffd700';
-            progressFill.style.background = 'linear-gradient(90deg, #ffd700, #ffeb3b, #ffd700)';
+            
+            // Add celebration effect to all controllers
+            const controllers = progressEmojis.querySelectorAll('span');
+            controllers.forEach((controller, index) => {
+                setTimeout(() => {
+                    controller.style.animation = 'controllerPulse 0.5s ease-out, controllerBounce 1s ease-out 0.5s';
+                }, index * 100);
+            });
+            
             this.showCompletionCelebration();
         }
     }
