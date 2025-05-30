@@ -135,6 +135,24 @@ class MovementSoundManager {
             this.minecraftMusic.pause();
         }
     }
+    
+    // Updated movement sound methods to use Minecraft music
+    playMovementSound(direction, surface = 'default') {
+        // Play Minecraft music when moving
+        this.playMinecraftMusic();
+    }
+    
+    // Play Minecraft music when starting to move
+    playStartMovementSound() {
+        if (!window.gameAudioEnabled) return;
+        this.playMinecraftMusic();
+    }
+    
+    // Stop Minecraft music when stopping movement
+    playStopMovementSound() {
+        if (!window.gameAudioEnabled) return;
+        this.stopMinecraftMusic();
+    }
 }
 
 
