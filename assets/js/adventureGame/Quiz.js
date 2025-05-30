@@ -1,6 +1,7 @@
 import Game from "./Game.js";
 class Quiz {
-    constructor() {
+    constructor(game = null) {
+        this.game = game;
         this.isOpen = false;
         this.dim = false;
         this.currentNpc = null;
@@ -494,10 +495,12 @@ class Quiz {
     
         let formattedQuestion;
         try {
-            const questionList = preFetchedQuestions ??
-                (await Game.fetchQuestionByCategory(npcData)).questions;
+            let questions = preFetchedQuestions;
+            if (!questions && this.game && this.game.quizManager) {
+                questions = await this.game.quizManager.fetchQuestionByCategory(npcData);
+            }
     
-            if (!questionList || questionList.length === 0) {
+            if (!questions || questions.length === 0) {
                 console.error("No questions found for category:", npcData);
                 this.isOpen = false;
                 return;
@@ -508,7 +511,7 @@ class Quiz {
             }
             const answered = this.answeredQuestionsByNpc[npcData];
     
-            const availableQuestions = questionList.filter(
+            const availableQuestions = questions.filter(
                 q => !answered.has(q.question.id)
             );
     
@@ -578,14 +581,11 @@ class Quiz {
     
                 const questionId = this.currentNpc.questionId; 
                 const choiceId = this.currentNpc.choiceIds?.[answerIndex]; 
-                const personId = Game.id;
+                const personId = 1;
     
                 try {
-                    if (questionId && choiceId && personId) {
-                        await Game.updateStatsMCQ(questionId, choiceId, personId);
-                        Game.fetchStats(personId); 
-                    } else {
-                        console.error("Missing required data for MCQ submission:", { questionId, choiceId, personId });
+                    if (this.game && this.game.statsManager) {
+                        await this.game.statsManager.updateStatsMCQ(questionId, choiceId, personId);
                     }
                 } catch (error) {
                     console.error("Error updating MCQ stats:", error);
@@ -619,8 +619,8 @@ class Quiz {
             
             // Award NPC cookie for correct answer
             try {
-                if (Game && Game.giveNpcCookie) {
-                    Game.giveNpcCookie(npcCategory, "completed", "Great job answering the quiz questions! You've demonstrated your knowledge.");
+                if (this.game && this.game.giveNpcCookie) {
+                    this.game.giveNpcCookie(npcCategory, "completed", "Great job answering the quiz questions! You've demonstrated your knowledge.");
                     console.log(`NPC Cookie awarded for ${npcCategory}`);
                 }
             } catch (error) {

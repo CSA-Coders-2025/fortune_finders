@@ -501,7 +501,6 @@ class GameLevelAirport {
             "Bitcoin is a decentralized digital currency, born from a desire for freedom and transparency. It operates without banks or governments.\nWould you like to know how to buy or mine Bitcoin?",
             [
                 { label: "How do I buy Bitcoin?", action: () => dialogFunctions.howToBuy(), keepOpen: true },
-                { label: "How do I mine Bitcoin?", action: () => dialogFunctions.howToMine(), keepOpen: true },
                 { label: "Back", action: () => dialogFunctions.intro(), keepOpen: true }
             ]
           );
@@ -516,16 +515,7 @@ class GameLevelAirport {
             ]
           );
           },
-          howToMine: function() {
-          showDialogBox(
-            "Satoshi Nakamoto",
-            "Mining Bitcoin requires powerful computers to solve complex puzzles. Miners are rewarded with Bitcoin for verifying transactions.\nWould you like to try mining or learn more?",
-            [
-              { label: "Try Mining", action: () => openInModal(`${pagesURI}/crypto/mining`) },
-              { label: "Back", action: () => dialogFunctions.aboutBitcoin(), keepOpen: true }
-            ]
-          );
-        }
+
         };
 
         function openInModal(url) {
@@ -706,7 +696,7 @@ class GameLevelAirport {
       SCALE_FACTOR: 6,
       ANIMATION_RATE: 50,
       pixels: { height: 747, width: 498 },
-      INIT_POSITION: { x: width * 0.34, y: height * 0.05 },
+      INIT_POSITION: { x: width * 0.34, y: height * 0.15 },
       orientation: { rows: 1, columns: 1 },
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.03, heightPercentage: 0.06 },
@@ -736,7 +726,7 @@ class GameLevelAirport {
       SCALE_FACTOR: 6,
       ANIMATION_RATE: 50,
       pixels: { height: 747, width: 398 },
-      INIT_POSITION: { x: width * 0.48, y: height * 0.05 },
+      INIT_POSITION: { x: width * 0.48, y: height * 0.15 },
       orientation: { rows: 1, columns: 1 },
       down: { row: 0, start: 0, columns: 1 },
       hitbox: { widthPercentage: 0.03, heightPercentage: 0.06 },

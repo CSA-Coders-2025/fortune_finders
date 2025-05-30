@@ -53,7 +53,7 @@ export default class WaypointArrow {
 
   createArrowElement() {
     let arrowImg = document.createElement('img');
-    arrowImg.src = this.gamePath + "/images/gamify/redarrow1.png";
+    arrowImg.src = this.gamePath + "/images/gamify/redarrow2.png";
     arrowImg.id = 'waypointArrow';
     arrowImg.style.position = 'absolute';
     arrowImg.style.zIndex = 2000;
@@ -143,8 +143,8 @@ export default class WaypointArrow {
     const positions = {
       'Stock-NPC':        { x: width * 0.17, y: height * 0.8 },
       'Casino-NPC':        { x: width * 0.15, y: height * 0.25 },
-      'Fidelity':          { x: width * 0.34, y: height * 0.05 },
-      'Schwab':            { x: width * 0.48, y: height * 0.05 },
+      'Fidelity':          { x: width * 0.38, y: height * 0.15 },
+      'Schwab':            { x: width * 0.48, y: height * 0.15 },
       'Crypto-NPC':        { x: width * 0.69, y: height * 0.24 },
       'Bank-NPC':          { x: width * 0.7, y: height * 0.75 },
       'Market Computer':   { x: width * 0.9, y: height * 0.65 }
