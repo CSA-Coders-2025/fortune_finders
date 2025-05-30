@@ -2217,7 +2217,7 @@ class Game {
         progressContainer.id = 'game-progress-bar';
         progressContainer.style.cssText = `
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             right: 0;
             height: 8px;
@@ -2258,7 +2258,7 @@ class Game {
         progressText.id = 'game-progress-text';
         progressText.style.cssText = `
             position: fixed;
-            top: 15px;
+            top: 75px;
             left: 20px;
             color: white;
             font-family: 'Press Start 2P', cursive;
@@ -2271,6 +2271,14 @@ class Game {
             border: 1px solid #333;
             backdrop-filter: blur(5px);
         `;
+
+        progressFill.appendChild(sparkleOverlay);
+        progressContainer.appendChild(progressFill);
+        document.body.appendChild(progressContainer);
+        document.body.appendChild(progressText);
+
+        // Initialize progress
+        this.updateProgressBar();
 
         // Add CSS animations if not present
         if (!document.getElementById('progress-bar-styles')) {
@@ -2296,14 +2304,6 @@ class Game {
             `;
             document.head.appendChild(style);
         }
-
-        progressFill.appendChild(sparkleOverlay);
-        progressContainer.appendChild(progressFill);
-        document.body.appendChild(progressContainer);
-        document.body.appendChild(progressText);
-
-        // Initialize progress
-        this.updateProgressBar();
     }
 
     updateProgressBar() {
