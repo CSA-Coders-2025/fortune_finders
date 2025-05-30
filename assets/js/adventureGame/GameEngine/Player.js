@@ -9,13 +9,18 @@ const INIT_POSITION = { x: 0, y: 0 };
 // Movement Sound Effects System
 class MovementSoundManager {
     constructor() {
+        // Initialize audio context for procedural sounds
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.lastFootstepTime = 0;
-        this.footstepInterval = 300; // Time between footsteps in milliseconds
-        this.isLeftFoot = true; // Alternate feet for realistic sound
-        this.currentSurface = 'default'; // Track surface type
+        this.footstepInterval = 300; // ms between footsteps
+        this.isLeftFoot = true;
         
-        // Surface types and their audio characteristics
+        // Initialize Minecraft beginning music
+        this.minecraftMusic = null;
+        this.initMinecraftMusic();
+        this.isMusicPlaying = false;
+        
+        // Surface type mapping for potential future use (keeping for compatibility)
         this.surfaces = {
             'default': { pitch: 1, volume: 0.15, character: 'soft' },
             'grass': { pitch: 0.8, volume: 0.12, character: 'soft' },
@@ -27,140 +32,108 @@ class MovementSoundManager {
         };
     }
     
+    // Initialize Minecraft beginning music
+    initMinecraftMusic() {
+        try {
+            // You can replace this path with the actual Minecraft beginning music file
+            // Download "C418 - Beginning" and place it in the assets/audio directory
+            this.minecraftMusic = new Audio('/assets/audio/minecraft-beginning.mp3');
+            this.minecraftMusic.loop = true; // Loop the music
+            this.minecraftMusic.volume = 0.3; // Set a comfortable volume
+            this.minecraftMusic.preload = 'auto';
+        } catch (error) {
+            console.log('Minecraft music file not found. Add minecraft-beginning.mp3 to assets/audio directory.');
+            // Fallback: create a simple melody reminiscent of Minecraft
+            this.createMinecraftLikeMelody();
+        }
+    }
+    
+    // Create a simple melody reminiscent of Minecraft's beginning theme
+    createMinecraftLikeMelody() {
+        // This creates a simple melody using Web Audio API if the actual file isn't available
+        this.minecraftMelodyInterval = null;
+    }
+    
+    // Play Minecraft-like melody using Web Audio API as fallback
+    playMinecraftLikeMelody() {
+        if (!window.gameAudioEnabled || this.isMusicPlaying) return;
+        
+        this.isMusicPlaying = true;
+        
+        // Simple Minecraft-inspired melody notes (frequencies in Hz)
+        const melody = [
+            { freq: 523.25, duration: 0.5 }, // C5
+            { freq: 659.25, duration: 0.5 }, // E5
+            { freq: 783.99, duration: 0.5 }, // G5
+            { freq: 659.25, duration: 0.5 }, // E5
+            { freq: 523.25, duration: 1.0 }, // C5
+            { freq: 440.00, duration: 0.5 }, // A4
+            { freq: 523.25, duration: 0.5 }, // C5
+            { freq: 587.33, duration: 1.0 }, // D5
+        ];
+        
+        let noteIndex = 0;
+        const playNote = () => {
+            if (!window.gameAudioEnabled || !this.isMusicPlaying) return;
+            
+            const note = melody[noteIndex % melody.length];
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+            
+            osc.frequency.setValueAtTime(note.freq, this.audioContext.currentTime);
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + note.duration);
+            
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + note.duration);
+            
+            noteIndex++;
+            
+            setTimeout(playNote, note.duration * 1000);
+        };
+        
+        playNote();
+    }
+    
     createFootstepSound(surface = 'default', isLeftFoot = true) {
+        // This method is now repurposed to play Minecraft music instead of footsteps
+        this.playMinecraftMusic();
+    }
+    
+    // New method to play Minecraft beginning music
+    playMinecraftMusic() {
         if (!window.gameAudioEnabled) return;
         
-        const surfaceData = this.surfaces[surface] || this.surfaces['default'];
-        const now = this.audioContext.currentTime;
-        
-        // Create main footstep sound
-        const osc1 = this.audioContext.createOscillator();
-        const gain1 = this.audioContext.createGain();
-        const filter1 = this.audioContext.createBiquadFilter();
-        
-        osc1.connect(filter1);
-        filter1.connect(gain1);
-        gain1.connect(this.audioContext.destination);
-        
-        // Different frequency based on surface and foot
-        const baseFreq = 80 + (isLeftFoot ? 0 : 10); // Slight variation between feet
-        const surfaceFreq = baseFreq * surfaceData.pitch;
-        
-        osc1.frequency.setValueAtTime(surfaceFreq + Math.random() * 20, now);
-        osc1.type = surfaceData.character === 'metallic' ? 'square' : 'triangle';
-        
-        // Filter setup based on surface
-        filter1.type = 'lowpass';
-        const filterFreq = surfaceData.character === 'muffled' ? 300 : 
-                          surfaceData.character === 'hard' ? 800 : 500;
-        filter1.frequency.setValueAtTime(filterFreq, now);
-        
-        // Volume and timing
-        gain1.gain.setValueAtTime(0, now);
-        gain1.gain.linearRampToValueAtTime(surfaceData.volume, now + 0.02);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        
-        osc1.start(now);
-        osc1.stop(now + 0.15);
-        
-        // Add surface-specific characteristics
-        if (surfaceData.character === 'hollow') {
-            // Add echo for wooden surfaces
-            this.addEcho(surfaceData.volume * 0.3, now + 0.08);
-        } else if (surfaceData.character === 'hard') {
-            // Add click for stone/concrete
-            this.addClick(surfaceData.volume * 0.5, now + 0.01);
+        if (this.minecraftMusic && this.minecraftMusic.readyState >= 2) {
+            // If the actual music file is available, play it
+            if (this.minecraftMusic.paused) {
+                this.minecraftMusic.currentTime = 0; // Start from beginning
+                this.minecraftMusic.play().catch(e => {
+                    console.log('Could not play Minecraft music:', e);
+                    this.playMinecraftLikeMelody();
+                });
+                this.isMusicPlaying = true;
+            }
+        } else {
+            // Fallback to generated melody
+            if (!this.isMusicPlaying) {
+                this.playMinecraftLikeMelody();
+            }
         }
     }
     
-    addEcho(volume, startTime) {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(120, startTime);
-        osc.type = 'sine';
-        
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
-        
-        osc.start(startTime);
-        osc.stop(startTime + 0.1);
-    }
-    
-    addClick(volume, startTime) {
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(1500 + Math.random() * 500, startTime);
-        osc.type = 'square';
-        
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(volume, startTime + 0.002);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.03);
-        
-        osc.start(startTime);
-        osc.stop(startTime + 0.03);
-    }
-    
-    playMovementSound(direction, surface = 'default') {
-        const currentTime = Date.now();
-        
-        // Check if enough time has passed for next footstep
-        if (currentTime - this.lastFootstepTime >= this.footstepInterval) {
-            this.createFootstepSound(surface, this.isLeftFoot);
-            this.isLeftFoot = !this.isLeftFoot; // Alternate feet
-            this.lastFootstepTime = currentTime;
+    // Stop Minecraft music when player stops moving
+    stopMinecraftMusic() {
+        this.isMusicPlaying = false;
+        if (this.minecraftMusic && !this.minecraftMusic.paused) {
+            this.minecraftMusic.pause();
         }
-    }
-    
-    // Ambient movement sounds
-    playStartMovementSound() {
-        if (!window.gameAudioEnabled) return;
-        
-        // Subtle sound when starting to move
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(200, this.audioContext.currentTime);
-        osc.type = 'sine';
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.05, this.audioContext.currentTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 0.2);
-    }
-    
-    playStopMovementSound() {
-        if (!window.gameAudioEnabled) return;
-        
-        // Subtle sound when stopping
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(150, this.audioContext.currentTime);
-        osc.type = 'sine';
-        
-        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.03, this.audioContext.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
-        
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 0.15);
     }
 }
 
