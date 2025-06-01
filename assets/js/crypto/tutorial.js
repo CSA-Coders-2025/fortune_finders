@@ -7,35 +7,21 @@ window.startTutorial = startTutorial;
 window.skipTutorial = skipTutorial;
 window.neverShowTutorial = neverShowTutorial;
 
-document.addEventListener('DOMContentLoaded', async function() {
-    // Check login status first
-    try {
-        const response = await fetch(`${javaURI}/api/auth/status`, {
-            ...fetchOptions,
-            method: 'GET'
-        });
-        const data = await response.json();
-        if (!data.isLoggedIn) {
-            showNotification('Please log in to access the tutorial');
-            return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user has seen the tutorial
+    const lastLogin = localStorage.getItem('lastLogin');
+    const now = new Date().getTime();
+    const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    
+    // Show tutorial if:
+    // 1. Tutorial has never been seen, or
+    // 2. Last login was more than a week ago, or
+    // 3. User hasn't chosen to never show it
+    if (!localStorage.getItem('tutorialSeen') || 
+        (lastLogin && (now - parseInt(lastLogin)) > oneWeek)) {
+        if (!localStorage.getItem('neverShowTutorial')) {
+            document.getElementById('tutorial-welcome').classList.remove('hidden');
         }
-        // Check if user has seen the tutorial
-        const lastLogin = localStorage.getItem('lastLogin');
-        const now = new Date().getTime();
-        const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-        // Show tutorial if:
-        // 1. Tutorial has never been seen, or
-        // 2. Last login was more than a week ago, or
-        // 3. User hasn't chosen to never show it
-        if (!localStorage.getItem('tutorialSeen') || 
-            (lastLogin && (now - parseInt(lastLogin)) > oneWeek)) {
-            if (!localStorage.getItem('neverShowTutorial')) {
-                document.getElementById('tutorial-welcome').classList.remove('hidden');
-            }
-        }
-    } catch (error) {
-        console.error('Error checking login status:', error);
-        showNotification('Error checking login status');
     }
 });
 function startTutorial() {
