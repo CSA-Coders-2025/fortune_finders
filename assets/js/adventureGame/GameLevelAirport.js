@@ -845,7 +845,7 @@ class GameLevelAirport {
             yellenFrame.style.border = "none";
             iframeWrapper.appendChild(yellenFrame);
 
-            // Add close button
+            // Add close butto
             const closeBtn = document.createElement("button");
             closeBtn.innerText = "✖";
             closeBtn.style.position = "absolute";
