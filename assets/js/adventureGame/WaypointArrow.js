@@ -143,7 +143,7 @@ export default class WaypointArrow {
     const positions = {
       'Stock-NPC':        { x: width * 0.2, y: height * 0.95 },
       'Casino-NPC':       { x: width * 0.19, y: height * 0.39 },
-      'Fidelity':         { x: width * 0.23, y: height * 0.40 },
+      'Fidelity':         { x: width * 0.38, y: height * 0.32 },
       'Schwab':           { x: width * 0.48, y: height * 0.15 },
       'Crypto-NPC':       { x: width * 0.73, y: height * 0.25 },
       'Bank-NPC':         { x: width * 0.7, y: height * 0.75 },
