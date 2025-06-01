@@ -651,6 +651,38 @@ async function updateMiningStats() {
     }
 }
 
+// GPU Temperature Animation
+let currentGpuTemp = 0;
+let gpuTempAnimationFrame = null;
+
+function animateGpuTemp(targetTemp) {
+    cancelAnimationFrame(gpuTempAnimationFrame);
+    function step() {
+        // Smoothly approach the target temperature
+        const diff = targetTemp - currentGpuTemp;
+        if (Math.abs(diff) < 0.1) {
+            currentGpuTemp = targetTemp;
+        } else {
+            currentGpuTemp += diff * 0.01; // Slower animation 
+        }
+        // Update the display
+        const tempElement = document.getElementById('gpu-temp');
+        tempElement.textContent = `${currentGpuTemp.toFixed(1)}°C`;
+        // Update color
+        if (currentGpuTemp >= 80) {
+            tempElement.className = 'stat-value text-red-500';
+        } else if (currentGpuTemp >= 70) {
+            tempElement.className = 'stat-value text-yellow-500';
+        } else {
+            tempElement.className = 'stat-value text-green-500';
+        }
+        if (currentGpuTemp !== targetTemp) {
+            gpuTempAnimationFrame = requestAnimationFrame(step);
+        }
+    }
+    gpuTempAnimationFrame = requestAnimationFrame(step);
+}
+
 // UI Updates
 function updateDisplay(stats) {
     // Log incoming data
@@ -691,7 +723,9 @@ function updateDisplay(stats) {
     const basePower = parseFloat(stats.powerConsumption) || 0;
     // Calculate new values with fluctuations
     const newTemp = Math.max(30, Math.min(90, baseTemp + tempVariation)); // Keep between 30-90°C
-    const newPower = Math.max(0, basePower + powerVariation); // Keep above 0W
+    const newPower = Math.max(0, basePower + powerVariation);
+    // Animate GPU temperature
+    animateGpuTemp(stats.isMining ? newTemp : 0);
     // Update display elements
     document.getElementById('hashrate').textContent = `${(parseFloat(stats.hashrate) || 0).toFixed(2)} MH/s`;
     document.getElementById('shares').textContent = stats.shares || 0;
@@ -706,15 +740,6 @@ function updateDisplay(stats) {
             `${activeGPUs} Active of ${totalGPUs} GPUs (Click to view)`;
     } else {
         document.getElementById('current-gpu').textContent = 'No GPUs';
-    }
-    // Add color indicators for temperature
-    const tempElement = document.getElementById('gpu-temp');
-    if (newTemp >= 80) {
-        tempElement.className = 'stat-value text-red-500'; // Hot
-    } else if (newTemp >= 70) {
-        tempElement.className = 'stat-value text-yellow-500'; // Warm
-    } else {
-        tempElement.className = 'stat-value text-green-500'; // Good
     }
     // Store stats globally for modal access
     window.stats = stats;
