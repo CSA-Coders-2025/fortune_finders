@@ -131,23 +131,23 @@ export default class WaypointArrow {
 
     // These offsets (dx, dy) move the arrow just above the NPC's head
     const offsets = {
-      'Stock-NPC':        { dx: 0, dy: -60 },   // J.P. Morgan
-      'Casino-NPC':        { dx: 0, dy: -60 },   // Frank Sinatra
-      'Fidelity':          { dx: 0, dy: 20},   // Lowered from -70 to -40
-      'Schwab':            { dx: 0, dy: 20 },   // Lowered from -70 to -40
-      'Crypto-NPC':        { dx: 0, dy: -60 },   // Satoshi Nakamoto
-      'Bank-NPC':          { dx: 0, dy: -60 },   // Janet Yellen
-      'Market Computer':   { dx: 0, dy: -60 }
+      'Stock-NPC':        { dx: 0, dy: -100 },    // J.P. Morgan - centered
+      'Casino-NPC':       { dx: 0, dy: -80 },     // Frank Sinatra
+      'Fidelity':         { dx: 0, dy: -120 },    // Fidelity - taller sprite
+      'Schwab':           { dx: 0, dy: -120 },    // Schwab - taller sprite
+      'Crypto-NPC':       { dx: 0, dy: -80 },     // Satoshi Nakamoto
+      'Bank-NPC':         { dx: 0, dy: -80 },     // Janet Yellen
+      'Market Computer':  { dx: 0, dy: -140 }     // Computer - larger object
     };
 
     const positions = {
-      'Stock-NPC':        { x: width * 0.17, y: height * 0.8 },
-      'Casino-NPC':        { x: width * 0.15, y: height * 0.25 },
-      'Fidelity':          { x: width * 0.38, y: height * 0.15 },
-      'Schwab':            { x: width * 0.48, y: height * 0.15 },
-      'Crypto-NPC':        { x: width * 0.69, y: height * 0.24 },
-      'Bank-NPC':          { x: width * 0.7, y: height * 0.75 },
-      'Market Computer':   { x: width * 0.9, y: height * 0.65 }
+      'Stock-NPC':        { x: width * 0.2, y: height * 0.95 },
+      'Casino-NPC':       { x: width * 0.15, y: height * 0.25 },
+      'Fidelity':         { x: width * 0.34, y: height * 0.15 },
+      'Schwab':           { x: width * 0.48, y: height * 0.15 },
+      'Crypto-NPC':       { x: width * 0.73, y: height * 0.25 },
+      'Bank-NPC':         { x: width * 0.7, y: height * 0.75 },
+      'Market Computer':  { x: width * 0.9, y: height * 0.65 }
     };
 
     const pos = positions[npcId] || { x: width / 2, y: height / 2 };
