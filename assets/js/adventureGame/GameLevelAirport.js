@@ -880,7 +880,7 @@ class GameLevelAirport {
           modal.style.display = "flex";
         }
 
-        // Define dialog functions
+        // Define dialog function
         const dialogFunctions = {
           intro: function() {
           showDialogBox(
