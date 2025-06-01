@@ -514,7 +514,7 @@ class GameLevelAirport {
       hitbox: { widthPercentage: 0.05, heightPercentage: 0.1 },
       reaction: function () {
         function openInModal(url) {
-          openReusableModal('yellenModal', 'yellenFrame', `${pagesURI}/${url}`);
+          openReusableModal('yellenModal', 'yellenFrame', url);
         }
 
         const dialogFunctions = {
@@ -526,8 +526,8 @@ class GameLevelAirport {
                 { label: "Learn about the Bank", action: () => dialogFunctions.explainBank(), keepOpen: true },
                 { label: "Review Analytics", action: () => dialogFunctions.analyticsIntro(), keepOpen: true },
                 { label: "Financial Tip", action: () => dialogFunctions.financialTip(), keepOpen: true },
-                { label: "Loans", action: () => openLeaderboardModal("https://open-coding-society.github.io/pages/gamify/loans")},
-                { label: "Overall Leaderboard", action: () => openLeaderboardModal("https://open-coding-society.github.io/pages/leaderboard/overall-leaderboard") },
+                { label: "Loans", action: () => openInModal(`${pagesURI}/gamify/loan`)},
+                { label: "Overall Leaderboard", action: () => openInModal(`${pagesURI}/leaderboard/overall-leaderboard`) },
                 { label: "Thank you, Ms. Yellen", action: () => {
                   // Give NPC cookie for completing the dialogue
                   if (gameEnv.game && gameEnv.game.giveNpcCookie) {
@@ -591,13 +591,6 @@ class GameLevelAirport {
       }
     };
 
-    function openLeaderboardModal(url) {
-      // If url is absolute (starts with http), use as is. Otherwise, prepend pagesURI
-      const isAbsolute = /^https?:\/\//.test(url);
-      const finalUrl = isAbsolute ? url : `${pagesURI}/${url}`;
-      openReusableModal('leaderboardModal', 'leaderboardFrame', finalUrl);
-    }
-
     this.classes = [
       { class: GameEnvBackground, data: image_data_desert },
       { class: Player, data: sprite_data_chillguy },
@@ -616,6 +609,7 @@ class GameLevelAirport {
 }
 
 export default GameLevelAirport;
+
 // Make GameLevelAirport available globally for auto-instntiation
 if (typeof window !== 'undefined') {
   window.GameLevelAirport = GameLevelAirport;
