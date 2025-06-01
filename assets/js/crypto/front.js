@@ -29,13 +29,37 @@ async function fetchUser() {
       userEmail = userInfo.email;
       console.log("Successfully fetched user email:", userEmail);
       localStorage.setItem("userEmail", userEmail);
-      fetchUserBalance(); // Fetch balance after getting the email
+      
+      // Initialize user data
+      try {
+        const initData = await initializeUserIfNeeded();
+        console.log('Initialization result:', initData);
+        
+        // Update UI with initial data if available
+        if (initData && initData.bank) {
+          updateBalance(initData.bank.balance);
+        } else {
+          // Set default balance if bank data is not available
+          updateBalance("0.00");
+        }
+      } catch (initError) {
+        console.warn("Error during initialization:", initError);
+        // Set default balance on initialization error
+        updateBalance("0.00");
+      }
+      
+      // Try to fetch mining state
+      await initializeMiningState();
+      
     } else if (response.status === 401 || response.status === 201) {
       console.log("Guest user detected");
       document.getElementById('user-balance').innerText = "0.00";
     }
   } catch (error) {
     console.error("Error fetching user:", error);
+    // Set default balance on error
+    document.getElementById('user-balance').innerText = "0.00";
+    showNotification('Error loading user data. Please refresh the page.', true);
   }
 }
 
@@ -1270,3 +1294,54 @@ window.addEventListener('offline', () => {
     showNotification('You are offline', true);
     stopPeriodicUpdates();
 });
+
+async function initializeUserIfNeeded() {
+    try {
+        // First try to get mining state
+        const stateResponse = await fetch(`${javaURI}/api/mining/state`, fetchOptions);
+        if (stateResponse.ok) {
+            console.log('Mining state exists, no initialization needed');
+            return;
+        }
+
+        // If mining state fails, try to initialize
+        console.log('Attempting to initialize user...');
+        const response = await fetch(`${javaURI}/api/mining/init/user?email=${userEmail}`, {
+            method: 'GET', // Changed from POST to GET
+            ...fetchOptions
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                console.log('Initialization endpoint not found, using fallback data');
+                // Use fallback data
+                const fallbackData = {
+                    bank: { balance: 1000.0 },
+                    miningUser: {
+                        email: userEmail,
+                        energyPlan: { name: 'Basic Plan', EEM: 0.12 }
+                    }
+                };
+                console.log('Using fallback data:', fallbackData);
+                return fallbackData;
+            }
+            throw new Error(`Failed to initialize user: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('User initialized:', data);
+        return data;
+        
+    } catch (error) {
+        console.error('Error initializing user:', error);
+        showNotification('Error initializing user data. Using fallback data.', true);
+        // Return fallback data
+        return {
+            bank: { balance: 1000.0 },
+            miningUser: {
+                email: userEmail,
+                energyPlan: { name: 'Basic Plan', EEM: 0.12 }
+            }
+        };
+    }
+}
