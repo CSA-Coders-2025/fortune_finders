@@ -834,7 +834,7 @@ class GameLevelAirport {
             iframeWrapper.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
             modal.appendChild(iframeWrapper);
 
-            // Create iframe
+            // Create ifram
             const yellenFrame = document.createElement("iframe");
             yellenFrame.id = "yellenFrame";
             yellenFrame.style.width = "100%";
