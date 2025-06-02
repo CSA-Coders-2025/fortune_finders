@@ -8,6 +8,7 @@ export default class WaypointArrow {
       'Casino-NPC',        // Frank Sinatra
       'Fidelity',          // Fidelity
       'Schwab',            // Schwab
+      'Mining-NPC',        // Mining Man
       'Crypto-NPC',        // Satoshi Nakamoto
       'Bank-NPC',          // Janet Yellen
       'Market Computer'    // Computer
@@ -135,6 +136,7 @@ export default class WaypointArrow {
       'Casino-NPC':       { dx: 0, dy: -80 },     // Frank Sinatra
       'Fidelity':         { dx: 0, dy: -120 },    // Fidelity - taller sprite
       'Schwab':           { dx: 0, dy: -120 },    // Schwab - taller sprite
+      'Mining-NPC':       { dx: 0, dy: -80 },     // Mining Man
       'Crypto-NPC':       { dx: 0, dy: -80 },     // Satoshi Nakamoto
       'Bank-NPC':         { dx: 0, dy: -80 },     // Janet Yellen
       'Market Computer':  { dx: 0, dy: -140 }     // Computer - larger object
@@ -144,10 +146,11 @@ export default class WaypointArrow {
       'Stock-NPC':        { x: width * 0.2, y: height * 0.95 },
       'Casino-NPC':       { x: width * 0.19, y: height * 0.39 },
       'Fidelity':         { x: width * 0.37, y: height * 0.32 },
-      'Schwab':           { x: width * 0.45, y: height * 0.39 },
-      'Crypto-NPC':       { x: width * 0.54, y: height * 0.39 },
-      'Bank-NPC':         { x: width * 0.5, y: height * 0.75 },
-      'Market Computer':  { x: width * 0.9, y: height * 0.45 }
+      'Schwab':           { x: width * 0.53, y: height * 0.32 },
+      'Mining-NPC':       { x: width * 0.655, y: height * 0.39 },
+      'Crypto-NPC':       { x: width * 0.765, y: height * 0.39 },
+      'Bank-NPC':         { x: width * 0.745, y: height * 0.88 },
+      'Market Computer':  { x: width * 0.9, y: height * 0.40 }
     };
 
     const pos = positions[npcId] || { x: width / 2, y: height / 2 };
