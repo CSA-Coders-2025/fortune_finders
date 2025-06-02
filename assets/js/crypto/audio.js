@@ -10,23 +10,26 @@ class AudioManager {
             miningStop: new Audio(`${baseUrl}/assets/sounds/crypto/mining_stop.mp3`),
             reward: new Audio(`${baseUrl}/assets/sounds/crypto/reward.mp3`),
             click: new Audio(`${baseUrl}/assets/sounds/crypto/click.mp3`),
-            bgm: new Audio(`${baseUrl}/assets/sounds/crypto/mining_bgm.mp3`)
+            bgm: new Audio(`${baseUrl}/assets/sounds/crypto/mining_bgm.mp3`),
+            buyingGPU: new Audio(`${baseUrl}/assets/sounds/crypto/buyingGPU.mp3`)
         };
 
         // Configure BGM
         this.sounds.bgm.loop = true;
-        this.sounds.bgm.volume = 0.3;
+        this.sounds.bgm.volume = 0.5;
 
         // Configure other sounds with adjusted volumes
-        this.sounds.miningStart.volume = 0.8; // Increased volume for mining start
+        this.sounds.miningStart.volume = 0.8;
         this.sounds.miningStop.volume = 0.5;
         this.sounds.reward.volume = 0.6;
         this.sounds.click.volume = 0.4;
+        this.sounds.buyingGPU.volume = 0.7;
 
         // Initialize audio state
         this.isMuted = localStorage.getItem('cryptoAudioMuted') === 'true';
         this.isBGMPlaying = false;
         this.bgmInitialized = false;
+        this.bgmPlayPromise = null;
 
         // Update volume icon based on initial mute state
         this.updateVolumeIcon();
@@ -34,12 +37,7 @@ class AudioManager {
         // Add click event listener to initialize BGM on first user interaction
         document.addEventListener('click', () => {
             if (!this.bgmInitialized && !this.isMuted) {
-                this.sounds.bgm.play().then(() => {
-                    this.isBGMPlaying = true;
-                    this.bgmInitialized = true;
-                }).catch(error => {
-                    console.warn('Error playing BGM on first interaction:', error);
-                });
+                this.playBGM();
             }
         }, { once: true });
 
@@ -68,33 +66,56 @@ class AudioManager {
         }
     }
 
+    // Helper method to play BGM
+    async playBGM() {
+        try {
+            if (this.bgmPlayPromise) {
+                await this.bgmPlayPromise;
+            }
+            this.bgmPlayPromise = this.sounds.bgm.play();
+            await this.bgmPlayPromise;
+            this.isBGMPlaying = true;
+            this.bgmInitialized = true;
+        } catch (error) {
+            console.warn('Error playing BGM:', error);
+            this.bgmPlayPromise = null;
+        }
+    }
+
+    // Helper method to pause BGM
+    async pauseBGM() {
+        try {
+            if (this.bgmPlayPromise) {
+                await this.bgmPlayPromise;
+            }
+            this.sounds.bgm.pause();
+            this.isBGMPlaying = false;
+            this.bgmPlayPromise = null;
+        } catch (error) {
+            console.warn('Error pausing BGM:', error);
+        }
+    }
+
     // Toggle BGM
-    toggleBGM() {
+    async toggleBGM() {
         if (this.isMuted) return;
 
         if (this.isBGMPlaying) {
-            this.sounds.bgm.pause();
-            this.isBGMPlaying = false;
+            await this.pauseBGM();
         } else {
-            this.sounds.bgm.play().catch(error => {
-                console.warn('Error playing BGM:', error);
-            });
-            this.isBGMPlaying = true;
+            await this.playBGM();
         }
     }
 
     // Toggle mute state
-    toggleMute() {
+    async toggleMute() {
         this.isMuted = !this.isMuted;
         localStorage.setItem('cryptoAudioMuted', this.isMuted);
 
         if (this.isMuted) {
-            this.sounds.bgm.pause();
-            this.isBGMPlaying = false;
+            await this.pauseBGM();
         } else if (this.isBGMPlaying) {
-            this.sounds.bgm.play().catch(error => {
-                console.warn('Error playing BGM:', error);
-            });
+            await this.playBGM();
         }
 
         // Update volume icon
@@ -110,7 +131,8 @@ class AudioManager {
     }
 
     // Stop all sounds
-    stopAll() {
+    async stopAll() {
+        await this.pauseBGM();
         Object.values(this.sounds).forEach(sound => {
             sound.pause();
             sound.currentTime = 0;
