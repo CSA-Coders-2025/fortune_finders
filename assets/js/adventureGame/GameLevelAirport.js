@@ -82,6 +82,7 @@ class GameLevelAirport {
               { label: "Take me to the Casino", action: () => {
                 // Give NPC cookie for visiting the casino
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_casino.id);
                   gameEnv.game.giveNpcCookie(sprite_data_casino.id, "casino_visited", "Try your luck at the casino games! Play responsibly and remember - the house always has an edge.");
                 }
                 openInModal(`${pagesURI}/gamify/casinohomepage`);
@@ -101,8 +102,10 @@ class GameLevelAirport {
               { label: "Take me to the Casino", action: () => {
                 // Give NPC cookie for visiting the casino
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_casino.id);
                   gameEnv.game.giveNpcCookie(sprite_data_casino.id, "casino_visited", "Try your luck at the casino games! Play responsibly and remember - the house always has an edge.");
                 }
+
                 openInModal(`${pagesURI}/gamify/casinohomepage`);
               }},
               { label: "Another tip", action: () => dialogFunctions.giveAdvice(), keepOpen: true },
@@ -130,6 +133,7 @@ class GameLevelAirport {
               { label: "Take me to the Casino", action: () => {
                 // Give NPC cookie for visiting the casino
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_casino.id);
                   gameEnv.game.giveNpcCookie(sprite_data_casino.id, "casino_visited", "Try your luck at the casino games! Play responsibly and remember - the house always has an edge.");
                 }
                 openInModal(`${pagesURI}/gamify/casinohomepage`);
@@ -138,6 +142,7 @@ class GameLevelAirport {
               { label: "Thanks, Frank!", action: () => {
                 // Give NPC cookie for completing the dialogue
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_casino.id);
                   gameEnv.game.giveNpcCookie(sprite_data_casino.id, "dialogue_completed", "Feel free to come back and visit the casino anytime you want to test your luck!");
                 }
               } }
@@ -150,8 +155,13 @@ class GameLevelAirport {
         return dialogFunctions;
       },
       interact: async function () {
-        const dialogFunctions = sprite_data_casino.reaction();
-        dialogFunctions.intro();
+        const game = gameEnv.game;
+        const npcProgressSystem = new NpcProgressSystem();
+        const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_casino.id);
+        if (allowed) {
+          const dialogFunctions = sprite_data_casino.reaction();
+          dialogFunctions.intro();
+        }
       }
     };
 
@@ -182,6 +192,7 @@ class GameLevelAirport {
               { label: "Thank you for the introduction", action: () => {
                 // Give NPC cookie for completing the dialogue
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_stocks.id);
                   gameEnv.game.giveNpcCookie(sprite_data_stocks.id, "dialogue_completed");
                 }
               } }
@@ -275,6 +286,7 @@ class GameLevelAirport {
               { label: "Thank you, Satoshi", action: () => {
                 // Give NPC cookie for completing the dialogue
                 if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                  gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_crypto.id);
                   gameEnv.game.giveNpcCookie(sprite_data_crypto.id, "dialogue_completed");
                 }
               } }
@@ -346,6 +358,7 @@ class GameLevelAirport {
                 { label: "Thank you, Max", action: () => {
                   // Give NPC cookie for completing the dialogue
                   if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                    gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_mining.id);
                     gameEnv.game.giveNpcCookie(sprite_data_mining.id, "dialogue_completed");
                   }
                 } }
@@ -531,6 +544,7 @@ class GameLevelAirport {
                 { label: "Thank you, Ms. Yellen", action: () => {
                   // Give NPC cookie for completing the dialogue
                   if (gameEnv.game && gameEnv.game.giveNpcCookie) {
+                    gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_bank.id);
                     gameEnv.game.giveNpcCookie(sprite_data_bank.id, "dialogue_completed");
                   }
                 } }

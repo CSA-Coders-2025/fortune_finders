@@ -26,7 +26,7 @@ class StatsManager {
 
     async updateNpcProgress(personId, npcId) {
         try {
-            const response = await fetch(`${this.game.javaURI}/updateNpcProgress`, {
+            const response = await fetch(`${this.game.javaURI}/bank/updateNpcProgress`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ personId, npcId })
@@ -1974,6 +1974,10 @@ class Game {
      */
     giveNpcCookie(npcId, reward = "completed", objective = null) {
         return this.statsManager.giveNpcCookie(npcId, reward, objective);
+    }
+
+    updateNpcProgress(personId, npcId) {
+        return this.statsManager.updateNpcProgress(personId, npcId);
     }
 
     /**
