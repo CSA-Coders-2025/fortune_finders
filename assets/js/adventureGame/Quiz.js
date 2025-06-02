@@ -476,88 +476,94 @@ class Quiz {
         // after the squares, creating a 2-wave effect
     }
 async openPanel(npcData, callback) {
-    console.log("Opening quiz panel with data:", npcData);
+  console.log("Opening quiz panel with data:", npcData);
 
-    if (this.isOpen) {
-        this.closePanel();
-        await new Promise(resolve => setTimeout(resolve, 100));
+  if (this.isOpen) {
+    this.closePanel();
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  let promptDropDown = document.getElementById("promptDropDown");
+  if (!promptDropDown) {
+    this.initialize();
+    promptDropDown = document.getElementById("promptDropDown");
+  } else {
+    promptDropDown.innerHTML = "";
+  }
+
+  this.isOpen = true;
+
+  let formattedQuestion;
+  try {
+
+    const response = await this.game.quizManager.fetchQuestionByCategory(npcData);
+    const questions = response?.questions || [];
+
+    if (questions.length === 0) {
+      console.error("No questions found for category:", npcData);
+      this.isOpen = false;
+      return;
     }
 
-    let promptDropDown = document.getElementById("promptDropDown");
-    if (!promptDropDown) {
-        this.initialize();
-        promptDropDown = document.getElementById("promptDropDown");
-    } else {
-        promptDropDown.innerHTML = "";
+
+    if (!this.answeredQuestionsByNpc[npcData]) {
+      this.answeredQuestionsByNpc[npcData] = new Set();
+    }
+    const answered = this.answeredQuestionsByNpc[npcData];
+
+    const availableQuestions = questions.filter(
+      q => !answered.has(q.question.id)
+    );
+
+    if (availableQuestions.length === 0) {
+      alert("You've answered all available questions from this NPC!");
+      this.isOpen = false;
+      return;
     }
 
-    this.isOpen = true;
+    const questionEntry = availableQuestions[0];
 
-    let formattedQuestion;
-    try {
-        let questions = await this.game?.quizManager?.fetchQuestionByCategory(npcData);
+    formattedQuestion = {
+      title: npcData + " Quiz",
+      npcCategory: npcData,
+      question: questionEntry.question.content,
+      type: "multiple-choice",
+      options: questionEntry.choices.map(c => c.choice),
+      correctAnswer: questionEntry.choices.findIndex(c => c.is_correct),
+      questionId: questionEntry.question.id,
+      choiceIds: questionEntry.choices.map(c => c.id)
+    };
+  } catch (error) {
+    console.error("Error fetching question:", error);
+    this.isOpen = false;
+    return;
+  }
 
-        if (!questions || questions.length === 0) {
-            console.error("No questions found for category:", npcData);
-            this.isOpen = false;
-            return;
-        }
+  this.currentNpc = formattedQuestion;
+  this.callback   = callback;
 
-        if (!this.answeredQuestionsByNpc[npcData]) {
-            this.answeredQuestionsByNpc[npcData] = new Set();
-        }
-        const answered = this.answeredQuestionsByNpc[npcData];
+  promptDropDown.style.display   = "block";
+  promptDropDown.style.position  = "fixed";
+  promptDropDown.style.width     = "50%";
+  promptDropDown.style.left      = "50%";
+  promptDropDown.style.top       = "15%";
+  promptDropDown.style.transform = "translateX(-50%)";
+  promptDropDown.style.zIndex    = "9999";
 
-        const availableQuestions = questions.filter(
-            q => !answered.has(q.question.id)
-        );
+  const newPromptTitle = document.createElement("div");
+  newPromptTitle.id = "promptTitle";
+  newPromptTitle.style.display = "block";
+  newPromptTitle.innerHTML = formattedQuestion.title;
+  promptDropDown.appendChild(newPromptTitle);
 
-        if (availableQuestions.length === 0) {
-            alert("You've answered all available questions from this NPC!");
-            this.isOpen = false;
-            return;
-        }
+  const scrollEdge = document.createElement("div");
+  scrollEdge.className = "scroll-edge";
+  scrollEdge.appendChild(this.updateTable());
+  promptDropDown.appendChild(scrollEdge);
 
-        const questionEntry = availableQuestions[0];
-
-        formattedQuestion = {
-            title: npcData + " Quiz",
-            npcCategory: npcData,
-            question: questionEntry.question.content,
-            type: "multiple-choice",
-            options: questionEntry.choices.map(c => c.choice),
-            correctAnswer: questionEntry.choices.findIndex(c => c.is_correct),
-            questionId: questionEntry.question.id,
-            choiceIds: questionEntry.choices.map(c => c.id)
-        };
-    } catch (error) {
-        console.error("Error fetching question:", error);
-        this.isOpen = false;
-        return;
-    }
-
-    this.currentNpc = formattedQuestion;
-    this.callback = callback;
-
-    // Setup quiz UI
-    promptDropDown.style.display = "block";
-    promptDropDown.style.position = "fixed";
-    promptDropDown.style.width = "50%";
-    promptDropDown.style.left = "50%";
-    promptDropDown.style.top = "15%";
-    promptDropDown.style.transform = "translateX(-50%)";
-    promptDropDown.style.zIndex = "9999";
-
-    const newPromptTitle = document.createElement("div");
-    newPromptTitle.id = "promptTitle";
-    newPromptTitle.style.display = "block";
-    newPromptTitle.innerHTML = formattedQuestion.title;
-    promptDropDown.appendChild(newPromptTitle);
-
-    const scrollEdge = document.createElement("div");
-    scrollEdge.className = "scroll-edge";
-    scrollEdge.appendChild(this.updateTable());
-    pr
+  this.backgroundDim.create();
+  promptDropDown.classList.add("quiz-popup");
+}
 
     
     
