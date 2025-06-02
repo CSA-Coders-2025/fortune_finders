@@ -23,6 +23,22 @@ class StatsManager {
             return null;
         }
     }
+
+    async updateNpcProgress(personId, npcId) {
+        try {
+            const response = await fetch(`${this.game.javaURI}/updateNpcProgress`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ personId, npcId })
+            });
+
+            if (!response.ok) throw new Error("Network response was not ok");
+            return await response.json();
+        } catch (error) {
+            console.error("Error updating NPC progress", error);
+            return "Error updating NPC progress";
+        }
+    }
     async fetchStats(personId) {
         const endpoints = {
             balance: this.game.javaURI + '/rpg_answer/getBalance/' + personId,
