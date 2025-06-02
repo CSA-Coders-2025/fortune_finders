@@ -382,6 +382,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeCharts();
     setupEventListeners();
     await initializeMiningState();
+    // Initialize audio system
+    if (window.audioManager) {
+        // Update volume icon based on initial state
+        window.audioManager.updateVolumeIcon();
+        
+        // Add click sound to buttons
+        document.querySelectorAll('button, a').forEach(element => {
+            element.addEventListener('click', () => {
+                window.audioManager.play('click');
+            });
+        });
+    }
   } catch (error) {
     console.error('Error during initialization:', error);
   }

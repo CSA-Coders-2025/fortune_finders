@@ -12,6 +12,7 @@ body {
     padding: 1rem;
     position: relative;
     z-index: 0; /* Lower z-index to stay below navbar */
+    padding-top: 1rem;
 }
 /* Title styles */
 .page-title {
@@ -810,4 +811,11 @@ body.modal-open {
 
 .volume-control button.muted:hover {
     opacity: 0.8;
+}
+
+/* Top Control Bar */
+.top-control-bar {
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(75, 85, 99, 0.4);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
