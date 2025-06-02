@@ -240,20 +240,6 @@ class GameLevelAirport {
             dialogFunctions.intro();
             return;
           }
-
-          // Calculate distance between player and NPC
-          const npcX = sprite_data_stocks.INIT_POSITION.x;
-          const npcY = sprite_data_stocks.INIT_POSITION.y;
-          const dx = player.x - npcX;
-          const dy = player.y - npcY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          // Use a more generous distance threshold
-          const threshold = Math.max(gameEnv.innerWidth, gameEnv.innerHeight) * 0.15; // 15% of screen size
-          if (distance < threshold) {
-            const dialogFunctions = sprite_data_stocks.reaction();
-            dialogFunctions.intro();
-          }
         }
       }
     };
