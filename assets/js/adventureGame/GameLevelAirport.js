@@ -421,10 +421,6 @@ class GameLevelAirport {
         const npcProgressSystem = new NpcProgressSystem();
         const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_fidelity.id);
         if (allowed) {
-          if (gameEnv.game && gameEnv.game.giveNpcCookie) {
-            gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_fidelity.id);
-            gameEnv.game.giveNpcCookie(sprite_data_fidelity.id, "fidelity");
-          }
           const dialogFunctions = sprite_data_fidelity.reaction();
           dialogFunctions.intro();
         }
@@ -455,10 +451,6 @@ class GameLevelAirport {
         const npcProgressSystem = new NpcProgressSystem();
         const allowed = await npcProgressSystem.checkNpcProgress(game, sprite_data_schwab.id);
         if (allowed) {
-          if (gameEnv.game && gameEnv.game.giveNpcCookie) {
-            gameEnv.game.updateNpcProgress(gameEnv.game.id, sprite_data_schwab.id);
-            gameEnv.game.giveNpcCookie(sprite_data_schwab.id, "schwab");
-          }
           const dialogFunctions = sprite_data_schwab.reaction();
           dialogFunctions.intro();
         }

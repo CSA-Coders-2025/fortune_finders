@@ -1864,7 +1864,7 @@ class QuizManager {
                 return;
             }
     
-            const quiz = new Quiz(this);
+            const quiz = new Quiz(this.game);
             quiz.initialize();
             quiz.openPanel(npcCategory, callback, allQuestions);
         } catch (error) {
