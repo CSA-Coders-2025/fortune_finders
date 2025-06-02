@@ -1,5 +1,8 @@
-import Game from "./Game.js";
+import FinTech from "./FinTech.js";
 class Quiz {
+    /**
+     * @param {FinTech} game - The FinTech game instance
+     */
     constructor(game = null) {
         this.game = game;
         this.isOpen = false;
