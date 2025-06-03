@@ -615,16 +615,24 @@ class Quiz {
             if (!this.answeredQuestionsByNpc[npcCategory]) {
                 this.answeredQuestionsByNpc[npcCategory] = new Set();
             }
+            
+            // Check if this is the first correct answer for this NPC
+            const isFirstCorrectAnswer = this.answeredQuestionsByNpc[npcCategory].size === 0;
+            
             this.answeredQuestionsByNpc[npcCategory].add(this.currentNpc.questionId);
             
-            // Award NPC cookie for correct answer
-            try {
-                if (this.game && this.game.giveNpcCookie) {
-                    this.game.giveNpcCookie(npcCategory, "completed", "Great job answering the quiz questions! You've demonstrated your knowledge.");
-                    console.log(`NPC Cookie awarded for ${npcCategory}`);
+            // Only award NPC cookie for the first correct answer
+            if (isFirstCorrectAnswer) {
+                try {
+                    if (this.game && this.game.giveNpcCookie) {
+                        this.game.giveNpcCookie(npcCategory, "first_question_completed", "Great job answering your first quiz question! You've demonstrated your knowledge.");
+                        console.log(`NPC Cookie awarded for ${npcCategory} - first question completed`);
+                    }
+                } catch (error) {
+                    console.error("Error awarding NPC cookie:", error);
                 }
-            } catch (error) {
-                console.error("Error awarding NPC cookie:", error);
+            } else {
+                console.log(`Correct answer for ${npcCategory}, but cookie already awarded for first question`);
             }
         }
         
