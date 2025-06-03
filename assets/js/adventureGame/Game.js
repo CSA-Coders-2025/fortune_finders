@@ -365,7 +365,7 @@ class StatsManager {
         // List of available NPCs that can give cookies
         const availableNpcs = [
             'Stock-NPC', 'Crypto-NPC', 'Casino-NPC', 'Bank-NPC',
-            'Fidelity', 'Schwab', 'Market Computer'
+            'Fidelity', 'Schwab'
         ];
         const totalAvailable = availableNpcs.length;
         const progressPercentage = totalAvailable > 0 ? (npcCookiesCount / totalAvailable) * 100 : 0;
@@ -533,7 +533,7 @@ class StatsManager {
             // Get actual NPC cookies count for waypoint NPCs only
             const waypointNpcs = [
                 'Stock-NPC', 'Casino-NPC', 'Fidelity', 'Schwab', 
-                'Crypto-NPC', 'Bank-NPC', 'Market Computer'
+                'Crypto-NPC', 'Bank-NPC'
             ];
             const npcCookies = this.getAllNpcCookies();
             const npcCookiesCount = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
@@ -545,7 +545,7 @@ class StatsManager {
         if (bar && label) {
             const waypointNpcs = [
                 'Stock-NPC', 'Casino-NPC', 'Fidelity', 'Schwab', 
-                'Crypto-NPC', 'Bank-NPC', 'Market Computer'
+                'Crypto-NPC', 'Bank-NPC'
             ];
             const npcCookies = this.getAllNpcCookies();
             const npcCookiesCount = waypointNpcs.filter(npcId => npcCookies[npcId]).length;
@@ -843,7 +843,7 @@ class StatsManager {
 
     generateProgressDots() {
         const allNpcCookies = this.getAllNpcCookies();
-        const totalNpcs = 7; // Total available NPCs
+        const totalNpcs = 6; // Total available NPCs
         const earnedCount = Object.keys(allNpcCookies).length;
         
         let dots = '';
@@ -2328,12 +2328,11 @@ class Game {
             'Fidelity',
             'Schwab',
             'Crypto-NPC',
-            'Bank-NPC',
-            'Market Computer'
+            'Bank-NPC'
         ];
 
         // Calculate progress based on waypoint NPC cookies only
-        const totalNpcs = waypointNpcs.length; // 7 NPCs
+        const totalNpcs = waypointNpcs.length; // 6 NPCs
         const npcCookies = this.getAllNpcCookies();
         
         // Count only waypoint NPCs that have at least one cookie
