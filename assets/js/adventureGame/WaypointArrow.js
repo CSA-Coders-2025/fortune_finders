@@ -9,8 +9,7 @@ export default class WaypointArrow {
       'Fidelity',          // Fidelity
       'Schwab',            // Schwab
       'Crypto-NPC',        // Satoshi Nakamoto
-      'Bank-NPC',          // Janet Yellen
-      'Market Computer'    // Computer
+      'Bank-NPC'           // Janet Yellen
     ];
     // Start at the first step (J.P. Morgan)
     this.currentStep = this.loadStep();
@@ -20,6 +19,13 @@ export default class WaypointArrow {
     this.arrowImg = this.createArrowElement();
     this.setupEventListeners();
     this.updateArrowBasedOnCookies(); // Check cookies on initialization
+    
+    // Track visibility state
+    this.isHiddenByModal = false;
+    this.isPermanentlyHidden = false;
+    
+    // Set up modal monitoring
+    this.setupModalMonitoring();
     
     // Make this instance globally accessible so the game can call methods on it
     window.waypointArrow = this;
@@ -56,7 +62,7 @@ export default class WaypointArrow {
     arrowImg.src = this.gamePath + "/images/gamify/redarrow2.png";
     arrowImg.id = 'waypointArrow';
     arrowImg.style.position = 'absolute';
-    arrowImg.style.zIndex = 2000;
+    arrowImg.style.zIndex = 500;
     arrowImg.style.width = '48px';
     arrowImg.style.height = '48px';
     arrowImg.style.pointerEvents = 'none';
@@ -189,6 +195,12 @@ export default class WaypointArrow {
 
   // Update arrow position based on earned cookies
   updateArrowBasedOnCookies() {
+    // Check if all NPCs are completed first
+    if (this.areAllNpcsCompleted()) {
+      this.hideArrow();
+      return;
+    }
+
     let targetStep = 0;
     
     // Find the furthest NPC that the player has earned a cookie from
@@ -213,9 +225,119 @@ export default class WaypointArrow {
     }
   }
 
+  // Check if all NPCs have been completed
+  areAllNpcsCompleted() {
+    const allCookies = this.getAllNpcCookies();
+    return this.waypointIds.every(npcId => allCookies[npcId]);
+  }
+
+  // Hide the arrow with a celebration effect (permanent)
+  hideArrow() {
+    if (!this.arrowImg || this.isPermanentlyHidden) return;
+
+    console.log('All NPCs completed! Hiding waypoint arrow permanently.');
+    
+    this.isPermanentlyHidden = true;
+    
+    // Create final celebration effect
+    this.createFinalCelebration();
+    
+    // Stop trail effect
+    if (this.trailInterval) {
+      clearInterval(this.trailInterval);
+    }
+    
+    // Animate arrow disappearing
+    this.arrowImg.style.animation = 'arrowAdvance 1s ease-out';
+    
+    setTimeout(() => {
+      this.arrowImg.style.transition = 'opacity 1s ease-out, transform 1s ease-out';
+      this.arrowImg.style.opacity = '0';
+      this.arrowImg.style.transform = 'scale(0) rotate(360deg)';
+      
+      setTimeout(() => {
+        this.arrowImg.style.display = 'none';
+      }, 1000);
+    }, 500);
+  }
+
+  // Create a final celebration when all NPCs are completed
+  createFinalCelebration() {
+    const particleCount = 30;
+    const arrowRect = this.arrowImg.getBoundingClientRect();
+    const centerX = arrowRect.left + arrowRect.width / 2;
+    const centerY = arrowRect.top + arrowRect.height / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      const colors = ['#ffd700', '#ffeb3b', '#4CAF50', '#03a9f4', '#e91e63', '#ff9800'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
+      particle.style.cssText = `
+        position: fixed;
+        left: ${centerX}px;
+        top: ${centerY}px;
+        width: 8px;
+        height: 8px;
+        background: ${color};
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 2001;
+        box-shadow: 0 0 10px ${color};
+      `;
+      
+      document.body.appendChild(particle);
+      
+      // Animate particle outward in waves
+      const wave = Math.floor(i / 10);
+      const angleInWave = (i % 10) * (Math.PI * 2 / 10);
+      const distance = 80 + wave * 40 + Math.random() * 60;
+      const deltaX = Math.cos(angleInWave) * distance;
+      const deltaY = Math.sin(angleInWave) * distance;
+      
+      particle.animate([
+        {
+          transform: 'translate(-50%, -50%) scale(0)',
+          opacity: 1
+        },
+        {
+          transform: 'translate(-50%, -50%) scale(1.5)',
+          opacity: 1,
+          offset: 0.2
+        },
+        {
+          transform: `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0.5)`,
+          opacity: 0.5,
+          offset: 0.8
+        },
+        {
+          transform: `translate(calc(-50% + ${deltaX * 1.3}px), calc(-50% + ${deltaY * 1.3}px)) scale(0)`,
+          opacity: 0
+        }
+      ], {
+        duration: 2000 + Math.random() * 1000,
+        delay: wave * 200,
+        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      });
+      
+      // Clean up
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 4000);
+    }
+  }
+
   // Called when a cookie is earned to check if arrow should advance
   onCookieEarned(npcId) {
     console.log(`Cookie earned from ${npcId}, checking waypoint advancement`);
+    
+    // Check if all NPCs are now completed
+    if (this.areAllNpcsCompleted()) {
+      this.hideArrow();
+      return;
+    }
     
     // Find the index of this NPC in our waypoint list
     const npcIndex = this.waypointIds.indexOf(npcId);
@@ -248,6 +370,11 @@ export default class WaypointArrow {
         // Reset to normal animation
         this.arrowImg.style.animation = 'arrowFloat 2s ease-in-out infinite, arrowGlow 1.5s ease-in-out infinite alternate';
       }, 400);
+    } else {
+      // If we've reached the last step, check if all NPCs are completed
+      if (this.areAllNpcsCompleted()) {
+        this.hideArrow();
+      }
     }
   }
 
@@ -296,7 +423,7 @@ export default class WaypointArrow {
         background: linear-gradient(45deg, #00ff00, #ffff00);
         border-radius: 50%;
         pointer-events: none;
-        z-index: 2001;
+        z-index: 501;
         box-shadow: 0 0 8px #00ff00;
       `;
       
@@ -359,5 +486,134 @@ export default class WaypointArrow {
   // Public method to refresh arrow position (can be called from outside)
   refresh() {
     this.updateArrowBasedOnCookies();
+  }
+
+  // Set up monitoring for modal/iframe opens and closes
+  setupModalMonitoring() {
+    // List of modal IDs to monitor
+    const modalIds = ['yellenModal', 'casinoModal', 'cryptoModal', 'leaderboardModal', 'miningModal'];
+    
+    // More aggressive modal detection with multiple approaches
+    const checkModals = () => {
+      let anyModalVisible = false;
+      
+      modalIds.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          const isVisible = modal.style.display === 'flex' || 
+                           modal.style.display === 'block' || 
+                           (modal.style.display !== 'none' && window.getComputedStyle(modal).display !== 'none');
+          if (isVisible) {
+            anyModalVisible = true;
+          }
+        }
+      });
+      
+      // Update arrow visibility based on modal state
+      if (anyModalVisible && !this.isHiddenByModal && !this.isPermanentlyHidden) {
+        this.hideArrowForModal();
+      } else if (!anyModalVisible && this.isHiddenByModal) {
+        this.showArrowAfterModal();
+      }
+    };
+    
+    // Check immediately
+    checkModals();
+    
+    // Set up periodic checking as backup
+    setInterval(checkModals, 500);
+    
+    // Use MutationObserver to watch for modal changes
+    const observer = new MutationObserver((mutations) => {
+      let shouldCheck = false;
+      
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          const target = mutation.target;
+          if (modalIds.includes(target.id)) {
+            shouldCheck = true;
+          }
+        }
+        
+        // Watch for new modals being added
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 && modalIds.includes(node.id)) {
+              shouldCheck = true;
+            }
+          });
+        }
+      });
+      
+      if (shouldCheck) {
+        setTimeout(checkModals, 100); // Small delay to ensure DOM is updated
+      }
+    });
+    
+    // Observe the document body for changes
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style']
+    });
+    
+    // Also add event listeners for common modal show/hide events
+    document.addEventListener('click', () => {
+      setTimeout(checkModals, 200);
+    });
+    
+    // Listen for any iframe loading
+    document.addEventListener('DOMNodeInserted', (e) => {
+      if (e.target.tagName === 'IFRAME') {
+        setTimeout(checkModals, 100);
+      }
+    });
+  }
+  
+  // Hide arrow when modal opens
+  hideArrowForModal() {
+    if (this.isPermanentlyHidden || !this.arrowImg) return;
+    
+    console.log('Modal opened - hiding waypoint arrow');
+    this.isHiddenByModal = true;
+    
+    // Smoothly fade out the arrow
+    this.arrowImg.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+    this.arrowImg.style.opacity = '0';
+    this.arrowImg.style.transform = 'scale(0.8)';
+    this.arrowImg.style.pointerEvents = 'none';
+    
+    // Stop trail effect temporarily
+    if (this.trailInterval) {
+      clearInterval(this.trailInterval);
+      this.trailInterval = null;
+    }
+  }
+  
+  // Show arrow when modal closes
+  showArrowAfterModal() {
+    if (this.isPermanentlyHidden || !this.arrowImg) return;
+    
+    console.log('Modal closed - showing waypoint arrow');
+    this.isHiddenByModal = false;
+    
+    // Smoothly fade in the arrow
+    this.arrowImg.style.transition = 'opacity 0.3s ease-in, transform 0.3s ease-in';
+    this.arrowImg.style.opacity = '1';
+    this.arrowImg.style.transform = 'scale(1)';
+    this.arrowImg.style.pointerEvents = 'none'; // Keep this as none since it's just visual
+    
+    // Restart trail effect
+    if (!this.trailInterval) {
+      this.startTrailEffect();
+    }
+    
+    // Reset to normal transition for movement
+    setTimeout(() => {
+      if (!this.isHiddenByModal && !this.isPermanentlyHidden) {
+        this.arrowImg.style.transition = 'top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), left 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s ease-in, transform 0.3s ease-in';
+      }
+    }, 300);
   }
 }
