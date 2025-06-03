@@ -1063,64 +1063,7 @@ window.addEventListener('DOMContentLoaded', function() {
   new WaypointArrow(gameCanvas, window.gamePath);
 });
 
-// Modern dialog and iframe for Janet Yellen
-// Initialize the waypoint arrow
-// Waypoint Arrow Integration
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Modern dialog and iframe for Janet Yellen
-// Initialize the waypoint arrow
-// Waypoint Arrow Integration
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
 
-// Modern dialog and iframe for Janet Yellen
-// Initialize the waypoint arrow
-// Waypoint Arrow Integration
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-
-// Modern dialog and iframe for Janet Yellen
-// Initialize the waypoint arrow
-// Waypoint Arrow Integration
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-
-// Modern dialog and iframe for Janet Yellen
-// Initialize the waypoint arrow
-// Waypoint Arrow Integration
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
-// Make GameLevelAirport available globally for auto-instntiation
 
 
 
