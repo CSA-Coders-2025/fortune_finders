@@ -322,6 +322,235 @@ class StatsManager {
                 z-index: 2;
             }
 
+            .assets-button {
+                background: linear-gradient(45deg, #4CAF50, #45a049);
+                border: 2px solid #4CAF50;
+                color: #fff;
+                padding: 8px 12px;
+                cursor: pointer;
+                font-family: 'Press Start 2P', cursive;
+                font-size: 10px;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+                margin-top: 10px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .assets-button:hover {
+                transform: translateY(-2px);
+                background: linear-gradient(45deg, #45a049, #4CAF50);
+                box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+            }
+
+            .assets-button::after {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(
+                    45deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.1),
+                    transparent
+                );
+                transform: rotate(45deg);
+                animation: shine 3s infinite;
+            }
+
+            /* Asset Dashboard Styles */
+            #asset-dashboard-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                z-index: 10500;
+                display: none;
+                justify-content: center;
+                align-items: center;
+                animation: blurIn 0.5s ease-out;
+            }
+
+            #asset-dashboard {
+                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+                border: 4px solid #4CAF50;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 900px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                font-family: 'Press Start 2P', cursive;
+                color: #fff;
+                position: relative;
+                box-shadow: 
+                    0 0 30px rgba(76, 175, 80, 0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.1);
+                animation: dashboardSlideIn 0.5s ease-out;
+            }
+
+            .dashboard-header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #4CAF50;
+                padding-bottom: 20px;
+            }
+
+            .dashboard-title {
+                font-size: 18px;
+                color: #4CAF50;
+                margin-bottom: 10px;
+                text-shadow: 2px 2px #000;
+            }
+
+            .dashboard-subtitle {
+                font-size: 10px;
+                color: #888;
+                margin-bottom: 15px;
+            }
+
+            .dashboard-section {
+                margin-bottom: 25px;
+                background: rgba(76, 175, 80, 0.1);
+                border: 2px solid #4CAF50;
+                border-radius: 10px;
+                padding: 20px;
+                position: relative;
+            }
+
+            .section-title {
+                font-size: 14px;
+                color: #4CAF50;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .asset-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            .asset-item {
+                background: rgba(0, 0, 0, 0.3);
+                border: 2px solid #333;
+                border-radius: 8px;
+                padding: 15px;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .asset-item:hover {
+                border-color: #4CAF50;
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
+            }
+
+            .asset-name {
+                font-size: 11px;
+                color: #4CAF50;
+                margin-bottom: 8px;
+            }
+
+            .asset-value {
+                font-size: 13px;
+                color: #fff;
+                margin-bottom: 5px;
+            }
+
+            .asset-change {
+                font-size: 9px;
+                margin-bottom: 5px;
+            }
+
+            .asset-change.positive {
+                color: #4CAF50;
+            }
+
+            .asset-change.negative {
+                color: #f44336;
+            }
+
+            .asset-quantity {
+                font-size: 9px;
+                color: #888;
+            }
+
+            .close-dashboard {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: #f44336;
+                color: #fff;
+                border: none;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                font-family: 'Press Start 2P', cursive;
+            }
+
+            .close-dashboard:hover {
+                transform: scale(1.1);
+                background: #d32f2f;
+            }
+
+            .loading-spinner {
+                width: 40px;
+                height: 40px;
+                border: 4px solid #333;
+                border-top: 4px solid #4CAF50;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 20px auto;
+            }
+
+            @keyframes blurIn {
+                0% { 
+                    opacity: 0; 
+                    backdrop-filter: blur(0px);
+                    -webkit-backdrop-filter: blur(0px);
+                }
+                100% { 
+                    opacity: 1; 
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                }
+            }
+
+            @keyframes dashboardSlideIn {
+                0% { 
+                    transform: scale(0.9) translateY(50px);
+                    opacity: 0;
+                }
+                100% { 
+                    transform: scale(1) translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
             @keyframes glowBorder {
                 0% { box-shadow: 0 0 5px #fff, inset 0 0 5px #fff; }
                 100% { box-shadow: 0 0 15px #fff, inset 0 0 8px #fff; }
@@ -444,12 +673,23 @@ class StatsManager {
                 <div id="npcs-progress-bar" style="width: ${progressPercentage}%;"></div>
                 <span id="npcs-progress-label">${npcCookiesCount} / ${totalAvailable}</span>
             </div>
+            <button class="assets-button" id="open-assets-dashboard">
+                💼 VIEW ASSETS
+            </button>
         `;
 
         statsContainer.appendChild(pinButton);
         statsWrapper.appendChild(statsButton);
         statsWrapper.appendChild(statsContainer);
         document.body.appendChild(statsWrapper);
+
+        // Initialize asset dashboard
+        this.initAssetDashboard();
+
+        // Add event listener for assets button
+        document.getElementById('open-assets-dashboard').addEventListener('click', () => {
+            this.openAssetDashboard();
+        });
 
         // Add hover sound effect
         const hoverSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
@@ -525,6 +765,193 @@ class StatsManager {
             }
         });
         // --- END PINNED STATE LOGIC ---
+    }
+
+    initAssetDashboard() {
+        // Create asset dashboard modal
+        const modal = document.createElement('div');
+        modal.id = 'asset-dashboard-modal';
+        
+        const dashboard = document.createElement('div');
+        dashboard.id = 'asset-dashboard';
+        
+        dashboard.innerHTML = `
+            <button class="close-dashboard" id="close-asset-dashboard">×</button>
+            <div class="dashboard-header">
+                <div class="dashboard-title">💼 ASSET PORTFOLIO</div>
+                <div class="dashboard-subtitle">Real-time portfolio overview</div>
+            </div>
+            <div id="dashboard-content">
+                <div class="loading-spinner"></div>
+            </div>
+        `;
+        
+        modal.appendChild(dashboard);
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        document.getElementById('close-asset-dashboard').addEventListener('click', () => {
+            this.closeAssetDashboard();
+        });
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeAssetDashboard();
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                this.closeAssetDashboard();
+            }
+        });
+    }
+
+    async openAssetDashboard() {
+        const modal = document.getElementById('asset-dashboard-modal');
+        const content = document.getElementById('dashboard-content');
+        
+        // Show modal with loading
+        modal.style.display = 'flex';
+        content.innerHTML = '<div class="loading-spinner"></div>';
+        
+        try {
+            // Fetch all asset data in parallel
+            const [balanceData, portfolioData, cryptoData] = await Promise.all([
+                this.fetchBalance(),
+                this.fetchPortfolio(),
+                this.fetchCryptoData()
+            ]);
+            
+            // Render dashboard content
+            this.renderAssetDashboard(balanceData, portfolioData, cryptoData);
+            
+        } catch (error) {
+            console.error('Error loading asset dashboard:', error);
+            content.innerHTML = `
+                <div class="dashboard-section">
+                    <div class="section-title">❌ Error Loading Assets</div>
+                    <p style="color: #f44336; font-size: 10px;">
+                        Failed to load asset data. Please try again later.
+                    </p>
+                </div>
+            `;
+        }
+    }
+
+    closeAssetDashboard() {
+        const modal = document.getElementById('asset-dashboard-modal');
+        modal.style.display = 'none';
+    }
+
+    async fetchBalance() {
+        try {
+            const response = await fetch(`${this.javaURI}/rpg_answer/getBalance/${this.id}`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch balance');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching balance:', error);
+            return 0;
+        }
+    }
+
+    async fetchPortfolio() {
+        try {
+            const response = await fetch(`${this.javaURI}/api/portfolio/${this.id}`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch portfolio');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching portfolio:', error);
+            return [];
+        }
+    }
+
+    async fetchCryptoData() {
+        try {
+            const response = await fetch(`${this.javaURI}/api/crypto/${this.id}`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch crypto data');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching crypto data:', error);
+            return [];
+        }
+    }
+
+    renderAssetDashboard(balance, portfolio, crypto) {
+        const content = document.getElementById('dashboard-content');
+        
+        // Calculate total portfolio value
+        const stockValue = portfolio.reduce((sum, stock) => sum + (stock.quantity * stock.currentPrice), 0);
+        const cryptoValue = crypto.reduce((sum, coin) => sum + (coin.quantity * coin.currentPrice), 0);
+        const totalValue = balance + stockValue + cryptoValue;
+        
+        content.innerHTML = `
+            <!-- Portfolio Summary -->
+            <div class="dashboard-section">
+                <div class="section-title">📊 PORTFOLIO SUMMARY</div>
+                <div class="asset-grid">
+                    <div class="asset-item">
+                        <div class="asset-name">Total Portfolio Value</div>
+                        <div class="asset-value">$${totalValue.toLocaleString()}</div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-name">Cash Balance</div>
+                        <div class="asset-value">$${balance.toLocaleString()}</div>
+                        <div class="asset-quantity">${((balance/totalValue)*100).toFixed(1)}% of portfolio</div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-name">Stock Holdings</div>
+                        <div class="asset-value">$${stockValue.toLocaleString()}</div>
+                        <div class="asset-quantity">${((stockValue/totalValue)*100).toFixed(1)}% of portfolio</div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-name">Crypto Holdings</div>
+                        <div class="asset-value">$${cryptoValue.toLocaleString()}</div>
+                        <div class="asset-quantity">${((cryptoValue/totalValue)*100).toFixed(1)}% of portfolio</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Holdings -->
+            <div class="dashboard-section">
+                <div class="section-title">📈 STOCK PORTFOLIO</div>
+                <div class="asset-grid">
+                    ${portfolio.length > 0 ? portfolio.map(stock => `
+                        <div class="asset-item">
+                            <div class="asset-name">${stock.symbol}</div>
+                            <div class="asset-value">$${stock.currentPrice.toFixed(2)}</div>
+                            <div class="asset-change ${stock.change >= 0 ? 'positive' : 'negative'}">
+                                ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}%
+                            </div>
+                            <div class="asset-quantity">
+                                ${stock.quantity} shares • $${(stock.quantity * stock.currentPrice).toLocaleString()}
+                            </div>
+                        </div>
+                    `).join('') : '<div class="asset-item"><div class="asset-name">No stocks owned</div></div>'}
+                </div>
+            </div>
+
+            <!-- Crypto Holdings -->
+            <div class="dashboard-section">
+                <div class="section-title">🪙 CRYPTOCURRENCY</div>
+                <div class="asset-grid">
+                    ${crypto.length > 0 ? crypto.map(coin => `
+                        <div class="asset-item">
+                            <div class="asset-name">${coin.symbol}</div>
+                            <div class="asset-value">$${coin.currentPrice.toFixed(2)}</div>
+                            <div class="asset-change ${coin.change >= 0 ? 'positive' : 'negative'}">
+                                ${coin.change >= 0 ? '+' : ''}${coin.change.toFixed(2)}%
+                            </div>
+                            <div class="asset-quantity">
+                                ${coin.quantity} ${coin.symbol} • $${(coin.quantity * coin.currentPrice).toLocaleString()}
+                            </div>
+                        </div>
+                    `).join('') : '<div class="asset-item"><div class="asset-name">No crypto owned</div></div>'}
+                </div>
+            </div>
+        `;
     }
 
     updateNpcsTalkedToUI(count) {
