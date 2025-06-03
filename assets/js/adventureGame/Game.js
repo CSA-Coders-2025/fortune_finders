@@ -819,14 +819,16 @@ class StatsManager {
         
         try {
             // Fetch all asset data in parallel
-            const [balanceData, portfolioData, cryptoData] = await Promise.all([
+            const [balanceData, stocksData, cryptoHoldingsData, cryptoMiningData, bankData] = await Promise.all([
                 this.fetchBalance(),
-                this.fetchPortfolio(),
-                this.fetchCryptoData()
+                this.fetchStocks(),
+                this.fetchCryptoHoldings(), 
+                this.fetchCryptoMining(),
+                this.fetchBankAnalytics()
             ]);
             
             // Render dashboard content
-            this.renderAssetDashboard(balanceData, portfolioData, cryptoData);
+            this.renderAssetDashboard(balanceData, stocksData, cryptoHoldingsData, cryptoMiningData, bankData);
             
         } catch (error) {
             console.error('Error loading asset dashboard:', error);
@@ -857,6 +859,90 @@ class StatsManager {
         }
     }
 
+    async fetchStocks() {
+        try {
+            // Get user email for stocks endpoint
+            const userEmail = await this.getUserEmail();
+            const response = await fetch(`${this.javaURI}/stocks/table/getStocks?username=${encodeURIComponent(userEmail)}`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch stocks');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching stocks:', error);
+            return [];
+        }
+    }
+
+    async fetchCryptoHoldings() {
+        try {
+            // Get user email for crypto holdings endpoint
+            const userEmail = await this.getUserEmail();
+            const response = await fetch(`${this.javaURI}/api/crypto/holdings?email=${encodeURIComponent(userEmail)}`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch crypto holdings');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching crypto holdings:', error);
+            return [];
+        }
+    }
+
+    async fetchCryptoMining() {
+        try {
+            // Fetch all crypto mining endpoints in parallel
+            const [statsResponse, stateResponse, statusResponse] = await Promise.all([
+                fetch(`${this.javaURI}/api/mining/stats`, this.fetchOptions),
+                fetch(`${this.javaURI}/api/mining/state`, this.fetchOptions),
+                fetch(`${this.javaURI}/api/mining/mining-status`, this.fetchOptions)
+            ]);
+
+            const miningData = {
+                stats: statsResponse.ok ? await statsResponse.json() : null,
+                state: stateResponse.ok ? await stateResponse.json() : null,
+                status: statusResponse.ok ? await statusResponse.json() : null
+            };
+
+            return miningData;
+        } catch (error) {
+            console.error('Error fetching crypto mining data:', error);
+            return {
+                stats: null,
+                state: null,
+                status: null
+            };
+        }
+    }
+
+    async fetchBankAnalytics() {
+        try {
+            // Use the user ID for bank analytics
+            if (!this.id) {
+                throw new Error('User ID not available');
+            }
+            const response = await fetch(`${this.javaURI}/bank/analytics/${this.id}`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch bank analytics');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching bank analytics:', error);
+            return null;
+        }
+    }
+
+    async getUserEmail() {
+        try {
+            // Try to get email from user data endpoint
+            const response = await fetch(`${this.pythonURI}/api/id`, this.fetchOptions);
+            if (!response.ok) throw new Error('Failed to fetch user data');
+            const userData = await response.json();
+            
+            // If email is not in the response, use a default email for now
+            // You may need to adjust this based on your actual user data structure
+            return userData.email || 'toby@gmail.com';
+        } catch (error) {
+            console.error('Error fetching user email:', error);
+            // Fallback to default email
+            return 'toby@gmail.com';
+        }
+    }
+
     async fetchPortfolio() {
         try {
             const response = await fetch(`${this.javaURI}/api/portfolio/${this.id}`, this.fetchOptions);
@@ -879,13 +965,24 @@ class StatsManager {
         }
     }
 
-    renderAssetDashboard(balance, portfolio, crypto) {
+    renderAssetDashboard(balance, stocks, cryptoHoldings, cryptoMining, bankData) {
         const content = document.getElementById('dashboard-content');
         
-        // Calculate total portfolio value
-        const stockValue = portfolio.reduce((sum, stock) => sum + (stock.quantity * stock.currentPrice), 0);
-        const cryptoValue = crypto.reduce((sum, coin) => sum + (coin.quantity * coin.currentPrice), 0);
-        const totalValue = balance + stockValue + cryptoValue;
+        // Calculate total portfolio value from all sources
+        const stockValue = Array.isArray(stocks) ? stocks.reduce((sum, stock) => {
+            const price = parseFloat(stock.currentPrice || stock.price || 0);
+            const quantity = parseFloat(stock.quantity || stock.shares || 0);
+            return sum + (price * quantity);
+        }, 0) : 0;
+        
+        const cryptoValue = Array.isArray(cryptoHoldings) ? cryptoHoldings.reduce((sum, coin) => {
+            const price = parseFloat(coin.currentPrice || coin.price || 0);
+            const quantity = parseFloat(coin.quantity || coin.amount || 0);
+            return sum + (price * quantity);
+        }, 0) : 0;
+        
+        const balanceValue = parseFloat(balance) || 0;
+        const totalValue = balanceValue + stockValue + cryptoValue;
         
         content.innerHTML = `
             <!-- Portfolio Summary -->
@@ -898,18 +995,18 @@ class StatsManager {
                     </div>
                     <div class="asset-item">
                         <div class="asset-name">Cash Balance</div>
-                        <div class="asset-value">$${balance.toLocaleString()}</div>
-                        <div class="asset-quantity">${((balance/totalValue)*100).toFixed(1)}% of portfolio</div>
+                        <div class="asset-value">$${balanceValue.toLocaleString()}</div>
+                        <div class="asset-quantity">${totalValue > 0 ? ((balanceValue/totalValue)*100).toFixed(1) : 0}% of portfolio</div>
                     </div>
                     <div class="asset-item">
                         <div class="asset-name">Stock Holdings</div>
                         <div class="asset-value">$${stockValue.toLocaleString()}</div>
-                        <div class="asset-quantity">${((stockValue/totalValue)*100).toFixed(1)}% of portfolio</div>
+                        <div class="asset-quantity">${totalValue > 0 ? ((stockValue/totalValue)*100).toFixed(1) : 0}% of portfolio</div>
                     </div>
                     <div class="asset-item">
                         <div class="asset-name">Crypto Holdings</div>
                         <div class="asset-value">$${cryptoValue.toLocaleString()}</div>
-                        <div class="asset-quantity">${((cryptoValue/totalValue)*100).toFixed(1)}% of portfolio</div>
+                        <div class="asset-quantity">${totalValue > 0 ? ((cryptoValue/totalValue)*100).toFixed(1) : 0}% of portfolio</div>
                     </div>
                 </div>
             </div>
@@ -918,37 +1015,96 @@ class StatsManager {
             <div class="dashboard-section">
                 <div class="section-title">📈 STOCK PORTFOLIO</div>
                 <div class="asset-grid">
-                    ${portfolio.length > 0 ? portfolio.map(stock => `
-                        <div class="asset-item">
-                            <div class="asset-name">${stock.symbol}</div>
-                            <div class="asset-value">$${stock.currentPrice.toFixed(2)}</div>
-                            <div class="asset-change ${stock.change >= 0 ? 'positive' : 'negative'}">
-                                ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}%
+                    ${Array.isArray(stocks) && stocks.length > 0 ? stocks.map(stock => {
+                        const price = parseFloat(stock.currentPrice || stock.price || 0);
+                        const quantity = parseFloat(stock.quantity || stock.shares || 0);
+                        const change = parseFloat(stock.change || stock.dayChange || 0);
+                        const symbol = stock.symbol || stock.ticker || 'N/A';
+                        return `
+                            <div class="asset-item">
+                                <div class="asset-name">${symbol}</div>
+                                <div class="asset-value">$${price.toFixed(2)}</div>
+                                <div class="asset-change ${change >= 0 ? 'positive' : 'negative'}">
+                                    ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                                </div>
+                                <div class="asset-quantity">
+                                    ${quantity} shares • $${(quantity * price).toLocaleString()}
+                                </div>
                             </div>
-                            <div class="asset-quantity">
-                                ${stock.quantity} shares • $${(stock.quantity * stock.currentPrice).toLocaleString()}
-                            </div>
-                        </div>
-                    `).join('') : '<div class="asset-item"><div class="asset-name">No stocks owned</div></div>'}
+                        `;
+                    }).join('') : '<div class="asset-item"><div class="asset-name">No stocks owned</div></div>'}
                 </div>
             </div>
 
             <!-- Crypto Holdings -->
             <div class="dashboard-section">
-                <div class="section-title">🪙 CRYPTOCURRENCY</div>
+                <div class="section-title">🪙 CRYPTOCURRENCY HOLDINGS</div>
                 <div class="asset-grid">
-                    ${crypto.length > 0 ? crypto.map(coin => `
+                    ${Array.isArray(cryptoHoldings) && cryptoHoldings.length > 0 ? cryptoHoldings.map(coin => {
+                        const price = parseFloat(coin.currentPrice || coin.price || 0);
+                        const quantity = parseFloat(coin.quantity || coin.amount || 0);
+                        const change = parseFloat(coin.change || coin.dayChange || 0);
+                        const symbol = coin.symbol || coin.ticker || 'N/A';
+                        return `
+                            <div class="asset-item">
+                                <div class="asset-name">${symbol}</div>
+                                <div class="asset-value">$${price.toFixed(2)}</div>
+                                <div class="asset-change ${change >= 0 ? 'positive' : 'negative'}">
+                                    ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                                </div>
+                                <div class="asset-quantity">
+                                    ${quantity} ${symbol} • $${(quantity * price).toLocaleString()}
+                                </div>
+                            </div>
+                        `;
+                    }).join('') : '<div class="asset-item"><div class="asset-name">No crypto owned</div></div>'}
+                </div>
+            </div>
+
+            <!-- Crypto Mining -->
+            <div class="dashboard-section">
+                <div class="section-title">⛏️ CRYPTO MINING STATUS</div>
+                <div class="asset-grid">
+                    ${cryptoMining ? `
+                        ${cryptoMining.stats ? `
+                            <div class="asset-item">
+                                <div class="asset-name">Mining Stats</div>
+                                <div class="asset-value">${JSON.stringify(cryptoMining.stats).substring(0, 50)}...</div>
+                            </div>
+                        ` : ''}
+                        ${cryptoMining.state ? `
+                            <div class="asset-item">
+                                <div class="asset-name">Mining State</div>
+                                <div class="asset-value">${cryptoMining.state.status || 'Unknown'}</div>
+                            </div>
+                        ` : ''}
+                        ${cryptoMining.status ? `
+                            <div class="asset-item">
+                                <div class="asset-name">Current Status</div>
+                                <div class="asset-value">${cryptoMining.status.active ? 'Active' : 'Inactive'}</div>
+                            </div>
+                        ` : ''}
+                    ` : '<div class="asset-item"><div class="asset-name">Mining data unavailable</div></div>'}
+                </div>
+            </div>
+
+            <!-- Bank Analytics -->
+            <div class="dashboard-section">
+                <div class="section-title">🏦 BANK ANALYTICS</div>
+                <div class="asset-grid">
+                    ${bankData ? `
                         <div class="asset-item">
-                            <div class="asset-name">${coin.symbol}</div>
-                            <div class="asset-value">$${coin.currentPrice.toFixed(2)}</div>
-                            <div class="asset-change ${coin.change >= 0 ? 'positive' : 'negative'}">
-                                ${coin.change >= 0 ? '+' : ''}${coin.change.toFixed(2)}%
-                            </div>
-                            <div class="asset-quantity">
-                                ${coin.quantity} ${coin.symbol} • $${(coin.quantity * coin.currentPrice).toLocaleString()}
-                            </div>
+                            <div class="asset-name">Account Summary</div>
+                            <div class="asset-value">${bankData.accountType || 'N/A'}</div>
+                            <div class="asset-quantity">Balance: $${parseFloat(bankData.balance || 0).toLocaleString()}</div>
                         </div>
-                    `).join('') : '<div class="asset-item"><div class="asset-name">No crypto owned</div></div>'}
+                        ${bankData.transactions ? `
+                            <div class="asset-item">
+                                <div class="asset-name">Recent Transactions</div>
+                                <div class="asset-value">${bankData.transactions.length || 0} transactions</div>
+                            </div>
+                        ` : ''}
+                    ` : '<div class="asset-item"><div class="asset-name">Bank data unavailable</div></div>'}
                 </div>
             </div>
         `;
